@@ -12,6 +12,7 @@ from scheduling.availability import local_day_bounds
 
 from .booking import available_slots, confirm_order, create_order, reassign
 from .models import Order
+from .views_lifecycle import CustomerOrderActionsMixin
 from .serializers import (
     ConfirmSerializer,
     CreateOrderSerializer,
@@ -31,7 +32,7 @@ def slots(request):
     return Response(available_slots(request.user, s.validated_data["address"], s.validated_data["items"]))
 
 
-class MyOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
+class MyOrderViewSet(CustomerOrderActionsMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin,
                      viewsets.GenericViewSet):
     """Customer's orders. POST books a time and holds it for the hold minutes."""
 
@@ -84,3 +85,19 @@ class ManagerOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
         tech = get_object_or_404(User, pk=s.validated_data["technician"])
         order = reassign(self.get_object(), tech, force=s.validated_data["force"])
         return Response(ManagerOrderSerializer(order).data)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        from .lifecycle import cancel_by_company
+        from .serializers import ReasonSerializer
+
+        s = ReasonSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        order = cancel_by_company(self.get_object(), request.user, s.validated_data["reason"])
+        return Response(ManagerOrderSerializer(order).data)
+
+    @action(detail=True, methods=["get"])
+    def photos(self, request, pk=None):
+        from .serializers import OrderPhotoSerializer
+
+        return Response(OrderPhotoSerializer(self.get_object().photos.all(), many=True).data)

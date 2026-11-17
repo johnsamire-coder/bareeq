@@ -157,6 +157,23 @@ DEFAULT_SETTINGS = [
         "value": 24,
         "mentioned_in_terms": True,
     },
+    # Before/after photos: checks that mark a photo as doubtful (it is still kept).
+    {
+        "key": "photos-max-age-minutes",
+        "group": "photos",
+        "label": "الصورة تتعلّم لو اتصورت قبل رفعها بأكتر من",
+        "description": "علامة بس، الصورة بتتحفظ. بتساعد تكشف الصور القديمة.",
+        "value_type": "minutes",
+        "value": 10,
+    },
+    {
+        "key": "photos-max-distance-meters",
+        "group": "photos",
+        "label": "الصورة تتعلّم لو اتصورت بعيد عن العنوان بأكتر من (متر)",
+        "description": "علامة بس، الصورة بتتحفظ.",
+        "value_type": "integer",
+        "value": 300,
+    },
     # Cars (SPEC section 3)
     {
         "key": "cars-first-year",

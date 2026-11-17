@@ -21,7 +21,8 @@ from scheduling.engine import can_fit, slot_grid
 from scheduling.models import TechnicianProfile
 from services.pricing import build_quote
 
-from .models import Order, OrderItem
+from .charges import attach_to_order, charges_payload, outstanding_charges, release_from_order
+from .models import CustomerCharge, Order, OrderItem
 
 
 @dataclass
@@ -101,11 +102,17 @@ def available_slots(customer, address_id, items):
             "date": day.isoformat(),
             "slots": [{"start": t, "free_technicians": counts[t]} for t in sorted(counts)],
         })
+    charges = outstanding_charges(customer)
+    charges_total = sum(c.amount for c in charges)
     return {
         "total_minutes": prep.minutes,
         "subtotal": prep.subtotal,
         "discount": prep.discount,
         "total": prep.total,
+        # Older unpaid fees, shown BEFORE the customer confirms, added as their own line.
+        "charges": charges_payload(charges),
+        "charges_total": charges_total,
+        "amount_due": prep.total + charges_total,
         "cars": [{"car": car.id, "quote": q} for car, q in prep.lines],
         "days": result_days,
     }
@@ -159,6 +166,7 @@ def create_order(customer, address_id, items, start):
     for car, q in prep.lines:
         OrderItem.objects.create(order=order, car=car, size_class=car.size_class, quote=q,
                                  minutes=q["total_minutes"], total=q["total"])
+    attach_to_order(order)
     return order
 
 
@@ -173,6 +181,7 @@ def confirm_order(order, payment_method):
     if order.status != Order.Status.PENDING_PAYMENT:
         raise BusinessError("not_pending", "الطلب ده مش مستني تأكيد.")
     if order.hold_expires_at and order.hold_expires_at <= timezone.now():
+        release_from_order(order)
         order.status = Order.Status.EXPIRED
         order.save(update_fields=["status", "updated_at"])
         raise BusinessError("hold_expired", "خلص وقت الحجز المؤقت. اختار الميعاد تاني.")
@@ -183,10 +192,14 @@ def confirm_order(order, payment_method):
     return order
 
 
+@transaction.atomic
 def expire_holds():
-    return Order.objects.filter(
-        status=Order.Status.PENDING_PAYMENT, hold_expires_at__lte=timezone.now()
-    ).update(status=Order.Status.EXPIRED, updated_at=timezone.now())
+    expired = list(Order.objects.select_for_update().filter(
+        status=Order.Status.PENDING_PAYMENT, hold_expires_at__lte=timezone.now()))
+    for order in expired:
+        release_from_order(order)
+    return Order.objects.filter(pk__in=[o.pk for o in expired]).update(
+        status=Order.Status.EXPIRED, updated_at=timezone.now())
 
 
 MOVABLE = (Order.Status.PENDING_PAYMENT, Order.Status.CONFIRMED)

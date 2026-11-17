@@ -41,6 +41,11 @@ class Order(models.Model):
     subtotal = models.PositiveIntegerField("قبل الخصم (قرش)")
     discount = models.PositiveIntegerField("الخصم (قرش)", default=0)
     total = models.PositiveIntegerField("الإجمالي (قرش)")
+    charges_total = models.PositiveIntegerField("رسوم سابقة مضافة (قرش)", default=0)
+    actual_start = models.DateTimeField("بدأ فعلاً", null=True, blank=True)
+    actual_end = models.DateTimeField("خلص فعلاً", null=True, blank=True)
+    called_customer_at = models.DateTimeField("الفني كلم العميل", null=True, blank=True)
+    cancel_reason = models.CharField("سبب الإلغاء", max_length=300, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,6 +57,11 @@ class Order(models.Model):
 
     def __str__(self):
         return f"طلب {self.id} - {self.customer}"
+
+    @property
+    def amount_due(self):
+        """Services total + older unpaid fees added to this order."""
+        return self.total + self.charges_total
 
     @property
     def place(self):
@@ -80,3 +90,88 @@ class OrderItem(models.Model):
     class Meta:
         verbose_name = "عربية في الطلب"
         verbose_name_plural = "العربيات في الطلب"
+
+
+class OrderEvent(models.Model):
+    """Every status change: who, when, where."""
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="events")
+    from_status = models.CharField(max_length=30, blank=True)
+    to_status = models.CharField(max_length=30)
+    by = models.ForeignKey(django_settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                           related_name="+")
+    at = models.DateTimeField(default=timezone.now)
+    lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    note = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        ordering = ["at", "id"]
+        verbose_name = "حركة على الطلب"
+        verbose_name_plural = "حركات الطلبات"
+
+
+def photo_path(instance, filename):
+    return f"order-photos/{instance.order_id}/{filename}"
+
+
+class OrderPhoto(models.Model):
+    """Before/after photo, kept as evidence. Never deleted; a retake adds a new row."""
+
+    class Stage(models.TextChoices):
+        BEFORE = "before", "قبل"
+        AFTER = "after", "بعد"
+
+    class Side(models.TextChoices):
+        FRONT = "front", "قدام"
+        BACK = "back", "ورا"
+        LEFT = "left", "الجنب الشمال"
+        RIGHT = "right", "الجنب اليمين"
+
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="photos")
+    stage = models.CharField(max_length=10, choices=Stage.choices)
+    side = models.CharField(max_length=10, choices=Side.choices)
+    image = models.ImageField(upload_to=photo_path)
+    width = models.PositiveIntegerField(default=0)
+    height = models.PositiveIntegerField(default=0)
+    taken_by = models.ForeignKey(django_settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    captured_at = models.DateTimeField("وقت التصوير (من موبايل الفني)")
+    uploaded_at = models.DateTimeField("وقت الوصول للسيرفر")
+    lat = models.DecimalField("خط العرض وقت التصوير", max_digits=9, decimal_places=6)
+    lng = models.DecimalField("خط الطول وقت التصوير", max_digits=9, decimal_places=6)
+    accuracy_m = models.PositiveIntegerField("دقة المكان (متر)", null=True, blank=True)
+    original_sha256 = models.CharField("بصمة الملف الأصلي", max_length=64)
+    flags = models.JSONField("ملاحظات", default=list, blank=True)
+
+    class Meta:
+        ordering = ["order", "stage", "side", "uploaded_at"]
+        verbose_name = "صورة"
+        verbose_name_plural = "صور قبل وبعد"
+
+
+class CustomerCharge(models.Model):
+    """A fee owed by the customer (late cancel / reschedule, car not found).
+    Added as its own line to his next order; the manager may waive it."""
+
+    class Kind(models.TextChoices):
+        LATE_CANCELLATION = "late_cancellation", "إلغاء متأخر"
+        LATE_RESCHEDULE = "late_reschedule", "تأجيل متأخر"
+        CAR_NOT_FOUND = "car_not_found", "الفني ملقاش العربية"
+
+    customer = models.ForeignKey(django_settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="charges")
+    kind = models.CharField("النوع", max_length=30, choices=Kind.choices)
+    amount = models.PositiveIntegerField("المبلغ (قرش)")
+    source_order = models.ForeignKey(Order, verbose_name="بسبب طلب", on_delete=models.PROTECT,
+                                     related_name="caused_charges")
+    created_at = models.DateTimeField(default=timezone.now)
+    applied_to_order = models.ForeignKey(Order, verbose_name="مضافة على طلب", null=True, blank=True,
+                                         on_delete=models.SET_NULL, related_name="applied_charges")
+    waived_at = models.DateTimeField("اتلغت إمتى", null=True, blank=True)
+    waived_by = models.ForeignKey(django_settings.AUTH_USER_MODEL, verbose_name="لغاها", null=True, blank=True,
+                                  on_delete=models.PROTECT, related_name="+")
+    waive_reason = models.CharField("سبب الإلغاء", max_length=300, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "رسوم على عميل"
+        verbose_name_plural = "رسوم على العملاء"

@@ -45,3 +45,21 @@ def make_customer(phone="01012345678", point=CITY_STARS, model=("Toyota", "Corol
     address = Address.objects.create(customer=customer, label="البيت", lat=point[0], lng=point[1], building="1",
                                      zone=Zone.objects.get(name="مدينة نصر"))
     return customer, car, address
+
+
+def jpeg_bytes(size=(3000, 2000), color=(200, 30, 30)):
+    import io
+
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", size, color).save(buf, "JPEG")
+    return buf.getvalue()
+
+
+def book_confirmed(customer, car, address, start, services=("exterior-wash",), now=None):
+    from orders.booking import confirm_order, create_order
+
+    with frozen_now(now or start - __import__("datetime").timedelta(days=1)):
+        o = create_order(customer, address.id, [{"car": car.id, "services": sid(*services)}], start)
+        return confirm_order(o, "cash")
