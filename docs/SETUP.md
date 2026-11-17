@@ -12,7 +12,7 @@
 | PostgreSQL 16 | قاعدة البيانات | `winget install --id PostgreSQL.PostgreSQL.16 -e` |
 | Node.js (النسخة LTS، 24) | مش محتاجينه دلوقتي (كان للوحة الويب اللي اتشالت). سيبه لو متسطب | `winget install --id OpenJS.NodeJS.LTS -e` |
 | Java 17 | مطلوب لتطبيق أندرويد | `winget install --id Microsoft.OpenJDK.17 -e` |
-| Android Studio | تشغيل التطبيق على أندرويد | `winget install --id Google.AndroidStudio -e` |
+| Android Studio | تشغيل التطبيق على أندرويد | `winget install --id google.androidstudio` (من غير `-e`: مع `-e` لازم الحروف الكبيرة والصغيرة تبقى مظبوطة) |
 | Flutter 3.44 (stable) | تطبيق الموبايل | مش موجود في winget. نزّل الـ zip من docs.flutter.dev وفكه في `D:\src\flutter` وضيف `D:\src\flutter\bin` للـ Path |
 
 ملاحظات:
@@ -68,45 +68,38 @@ claude
 
 ### السيرفر (Django) — من الخطوة 2
 
-**أول مرة بس على الجهاز:**
+**أول مرة بس على الجهاز** (اتجربت على لاب توب الشغل 17 نوفمبر 2026 ونجحت):
 
-1) اعمل مستخدم وقاعدة بيانات `bareeq` (منفصلين تماماً عن أي حاجة تانية على الجهاز). الأمر ده هيسألك على باسورد `postgres`.
-حط مكان `PASTE_DB_PASSWORD` الباسورد اللي في Bitwarden (`bareeq - backend .env`، السطر `DB_PASSWORD`).
-
-PowerShell على جهازك (PS C:\):
-
-```powershell
-psql -U postgres -c "CREATE ROLE bareeq LOGIN PASSWORD 'PASTE_DB_PASSWORD' CREATEDB;" -c "CREATE DATABASE bareeq OWNER bareeq ENCODING 'UTF8';"
-```
-
-2) جهّز بيئة بايثون الخاصة بالمشروع، وملف الأسرار، وجداول قاعدة البيانات.
+اللصقة دي بتجيب المشروع، وبتعمل **باسوردات جديدة للجهاز ده** وتكتبها في `backend/.env` من غير ما تظهر، وبتعمل قاعدة `bareeq` لوحدها، وتسطب المكتبات، وتجهز الجداول، وتضيف الفنيين التجريبيين، وتشغّل الاختبارات. هتسألك مرة واحدة على باسورد `postgres` (اللي اتعمل وقت تسطيب PostgreSQL). كلها حروف صغيرة عن قصد (شوف الملحوظة تحت).
 
 PowerShell على جهازك (PS C:\):
 
 ```powershell
-cd D:\bareeq\backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\pip install -r requirements.txt
-copy .env.example .env
-notepad .env
+cd d:\bareeq; git pull
+cd d:\bareeq\backend
+if (test-path .env) { "env file already exists - send this to claude" } else {
+  $p = -join ((97..122) | get-random -count 24 | % {[char]$_})
+  $k = -join ((97..122) | get-random -count 50 | % {[char]$_})
+  (get-content .env.example) -replace '^(django_secret_key=)$', ('${1}'+$k) -replace '^(db_password=)$', ('${1}'+$p) | set-content .env
+  & "c:\program files\postgresql\16\bin\psql.exe" --username=postgres -c "create role bareeq login password '$p' createdb;" -c "create database bareeq owner bareeq encoding 'utf8';"
+  py -3.12 -m venv .venv
+  .\.venv\scripts\pip install -r requirements.txt
+  .\.venv\scripts\python manage.py migrate
+  .\.venv\scripts\python manage.py seed_demo_technicians
+  .\.venv\scripts\python manage.py test --noinput
+}
 ```
 
-في Notepad حط قيم `DJANGO_SECRET_KEY` و `DB_PASSWORD` من Bitwarden واحفظ. وبعدين:
+في الآخر لازم يظهر `Ran 280 tests` (أو أكتر) وتحته `OK`. بعدها افتح `notepad d:\bareeq\backend\.env` وانسخ محتواه في Bitwarden باسم `bareeq - <اسم الجهاز> backend .env` (مثلاً `bareeq - laptop backend .env`). كل جهاز ليه باسوردات قاعدة بيانات خاصة بيه.
 
-```powershell
-.\.venv\Scripts\python manage.py migrate
-.\.venv\Scripts\python manage.py createsuperuser
-```
+> **ملحوظة مهمة (لاب توب الشغل):** وقت اللصق في PowerShell **الحروف الكبيرة بتختفي** (مثلاً `Get-PSDrive` بتوصل `et-rive`). عشان كده الأوامر هنا بحروف صغيرة، وPowerShell بيفهمها عادي. لو أمر فيه حروف كبيرة فشل بشكل غريب، اكتبه بحروف صغيرة.
 
-(الأمر الأخير بيعمل حساب دخول لصفحة الإدارة. هيسألك على رقم موبايل واسم وباسورد. احفظ الباسورد في Bitwarden باسم `bareeq - local admin`.)
-
-> **ملحوظة:** لو كنت شغّلت `migrate` على جهازك قبل الخطوة 3، جدول المستخدمين اتغير. امسح قاعدة البيانات واعملها تاني (هي فاضية أصلاً):
-> `psql -U postgres -c "DROP DATABASE bareeq;" -c "CREATE DATABASE bareeq OWNER bareeq ENCODING 'UTF8';"` وبعدين `migrate` تاني.
+> **صفحة الإدارة `/admin/`** (احتياطي لينا بس): لو احتجتها، `.\.venv\scripts\python manage.py createsuperuser` واحفظ الباسورد في Bitwarden باسم `bareeq - local admin`.
 
 **حساب مدير للتطبيق** (بيدخل بالموبايل والكود، مش بباسورد):
 
 ```powershell
-.\.venv\Scripts\python manage.py create_manager --phone 01XXXXXXXXX --name "الاسم"
+.\.venv\scripts\python manage.py create_manager --phone 01xxxxxxxxx --name "الاسم"
 ```
 
 **كود الدخول وقت التجربة:** لسه مفيش شركة رسايل، فالكود مش بيتبعت SMS. بيظهر في شباك السيرفر في سطر شكله كده: `OTP for +2010XXXXXXXX: 123456`. ولو «وضع تجربة» شغال في جدول الإعدادات (وهو شغال دلوقتي)، الكود بيظهر كمان على شاشة الدخول نفسها.
@@ -175,7 +168,11 @@ flutter test
 ### تشغيل التطبيق على موبايل أندرويد حقيقي (على اللاب توب)
 
 **أول مرة بس:**
-1. سطّب Android Studio (فوق في جدول البرامج)، وافتحه مرة عشان ينزّل الـ Android SDK، وبعدين: `flutter doctor --android-licenses` ووافق على كله.
+1. سطّب Android Studio (فوق في جدول البرامج). **التسطيب لوحده مش كفاية**: لازم تفتحه عشان ينزّل أدوات أندرويد (Android SDK)، حوالي 1 لـ 2 جيجا:
+   - لو ظهر **Setup Wizard**: Next ← **Custom** ← في **Android SDK Location** اكتب `D:\Android\Sdk` ← Next ← Accept لكل الشروط ← Finish، واستنى التنزيل.
+   - لو فتح على **Welcome**: More Actions ← **SDK Manager** ← **Android SDK Location** = `D:\Android\Sdk`، ومن تبويب **SDK Tools** علّم على **Android SDK Command-line Tools** ← OK.
+   - بعدها: `flutter doctor --android-licenses` (اكتب `y` في كل سؤال)، وبعدين `flutter doctor` لازم سطر **Android toolchain** يبقى عليه ✓.
+   - للتأكد إن الأدوات موجودة: `test-path d:\android\sdk` لازم يطلع `True`.
 2. على الموبايل: الإعدادات ← عن الهاتف ← دوس على «رقم الإصدار» 7 مرات، وبعدين من «خيارات المطور» شغّل «تصحيح أخطاء USB». وصّل الموبايل باللاب توب بالكابل ووافق على الرسالة اللي هتظهر على الموبايل.
 3. اعرف عنوان اللاب توب على الشبكة: في PowerShell اكتب `ipconfig` وخد الرقم اللي جنب «IPv4 Address» (شكله زي 192.168.1.10). الموبايل واللاب توب لازم يكونوا على نفس الواي فاي.
 4. في `backend/.env` زوّد الرقم ده في `DJANGO_ALLOWED_HOSTS`، مثلاً: `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.10`
