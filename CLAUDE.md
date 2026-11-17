@@ -28,3 +28,10 @@ The visual identity is in `design/brand-kit/`.
 - Money: store as integer piastres (or Decimal), never float. Every wallet change is a ledger row (see SPEC).
 - Write tests for scheduling (slot calculation) and wallet/ledger logic before UI work on them.
 - Commit in small, clear commits. Keep secrets out of git (`.env` files, keys).
+
+## Progress, GitHub, and secrets — IMPORTANT
+- At the start of every session, read `docs/PROGRESS.md` first to know where we stopped.
+- After every step is finished AND verified working: update `docs/PROGRESS.md` (what was done, where, where we stopped, the next step), update `docs/SETUP.md` if the step added anything needed on a new machine, then commit and push to GitHub (`origin main`). Never push a step that is not working.
+- `docs/SETUP.md` must always be enough to set up a brand-new laptop from zero and continue the work.
+- Secrets (passwords, API keys, Firebase/Google files, signing keys) NEVER go to git. They live only in `.env` files (or files matched by `.gitignore`). Commit an `.env.example` with the variable names and empty values instead.
+- Whenever a new secret is created, tell John in the same reply: its name, which file it is in, and to save a copy in his password manager (see "Secrets" in `docs/SETUP.md`). Before every commit, check `git status` that no secret file is staged.
