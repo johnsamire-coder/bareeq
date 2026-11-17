@@ -6,7 +6,7 @@ from django import forms
 
 from services.admin import PoundsField, to_piastres
 
-from .models import DailyClosing, Invoice, Material, Payment, WalletEntry
+from .models import DailyClosing, Invoice, Material, Payment, TechnicianCustody, WalletEntry
 
 
 class _ReadOnly(admin.ModelAdmin):
@@ -71,3 +71,9 @@ class MaterialAdmin(admin.ModelAdmin):
     @admin.display(description="سعر الوحدة")
     def unit_price(self, obj):
         return f"{obj.unit_cost / 100:g} ج.م"
+
+
+@admin.register(TechnicianCustody)
+class TechnicianCustodyAdmin(_ReadOnly):
+    list_display = ("technician", "kind", "amount", "closing", "note", "created_by", "created_at")
+    list_filter = ("kind",)

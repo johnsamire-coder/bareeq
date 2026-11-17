@@ -9,7 +9,7 @@ from core.errors import BusinessError
 from orders.models import Order
 from scheduling.availability import CAIRO, local_day_bounds
 
-from .models import DailyClosing, Material, MaterialUsage, Payment
+from .models import DailyClosing, Material, MaterialUsage, Payment, TechnicianCustody
 
 
 def _day_of(order):
@@ -78,7 +78,7 @@ def closing_summary(technician, day):
         "wash_margin": sum(r["wash_margin"] for r in rows),
         "closing": None if closing is None else {
             "id": closing.id, "status": closing.status, "cash_handed": closing.cash_handed,
-            "difference": closing.difference},
+            "difference": closing.difference, "confirm_reason": closing.confirm_reason},
     }
 
 
@@ -100,12 +100,23 @@ def submit_closing(technician, day, cash_handed, note=""):
 
 
 @transaction.atomic
-def confirm_closing(closing, manager):
+def confirm_closing(closing, manager, reason=""):
+    """The manager receives the cash. Any difference needs a written reason and
+    goes on the technician's custody: a shortage he owes, or an overage."""
     closing = DailyClosing.objects.select_for_update().get(pk=closing.pk)
     if closing.status != DailyClosing.Status.SUBMITTED:
         raise BusinessError("not_submitted", "التقفيل ده مش مستني تأكيد.")
+    reason = (reason or "").strip()
+    if closing.difference and not reason:
+        raise BusinessError("reason_required", "فيه فرق في التقفيل. اكتب السبب الأول.")
     closing.status = DailyClosing.Status.CONFIRMED
     closing.confirmed_by = manager
     closing.confirmed_at = timezone.now()
+    closing.confirm_reason = reason
     closing.save()
+    if closing.difference:
+        TechnicianCustody.objects.create(
+            technician=closing.technician, closing=closing,
+            kind=TechnicianCustody.Kind.SHORTAGE if closing.difference < 0 else TechnicianCustody.Kind.OVERAGE,
+            amount=abs(closing.difference), note=reason, created_by=manager)
     return closing

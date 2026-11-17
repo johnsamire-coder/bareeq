@@ -18,8 +18,9 @@ from scheduling.availability import CAIRO
 
 from . import wallet
 from .closing import closing_summary, confirm_closing, record_materials, submit_closing
+from .custody import custody_balance, custody_report, settle_custody
 from .invoices import cancel_invoice
-from .models import DailyClosing, Invoice, Material, Payment, WalletEntry
+from .models import DailyClosing, Invoice, Material, Payment, TechnicianCustody, WalletEntry
 from .payments import mark_refunded, review_instapay
 from .serializers import (
     DailyClosingSerializer,
@@ -29,7 +30,9 @@ from .serializers import (
     MaterialsSerializer,
     PaymentSerializer,
     ReasonSerializer,
+    SettleCustodySerializer,
     SubmitClosingSerializer,
+    TechnicianCustodySerializer,
     WalletEntrySerializer,
 )
 
@@ -102,7 +105,7 @@ def technician_closing(request):
             day = date.fromisoformat(raw) if raw else timezone.now().astimezone(CAIRO).date()
         except ValueError:
             raise BusinessError("bad_date", "التاريخ مش صحيح.")
-        return Response(closing_summary(request.user, day))
+        return Response({**closing_summary(request.user, day), "custody_balance": custody_balance(request.user)})
     s = SubmitClosingSerializer(data=request.data)
     s.is_valid(raise_exception=True)
     d = s.validated_data
@@ -168,7 +171,10 @@ class ManagerClosingViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     @action(detail=True, methods=["post"])
     def confirm(self, request, pk=None):
-        return Response(DailyClosingSerializer(confirm_closing(self.get_object(), request.user)).data)
+        s = ReasonSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        closing = confirm_closing(self.get_object(), request.user, s.validated_data["reason"])
+        return Response(DailyClosingSerializer(closing).data)
 
 
 class ManagerMaterialViewSet(viewsets.ModelViewSet):
@@ -207,3 +213,29 @@ def manager_order_money(request, pk):
                      "materials_cost": o.materials_cost, "wash_margin": o.wash_margin,
                      "materials": [{"material": u.material.name, "quantity": str(u.quantity), "cost": u.cost}
                                    for u in o.material_usages.select_related("material")]})
+
+
+# ---------- technician custody (عهدة) ----------
+
+@api_view(["GET"])
+@permission_classes([IsManager])
+def manager_custody(request):
+    """All technicians with their custody totals, or ?technician=ID for one with its lines."""
+    tech_id = request.query_params.get("technician")
+    if not tech_id:
+        return Response(custody_report())
+    tech = get_object_or_404(User, pk=tech_id, role=User.Role.TECHNICIAN)
+    row = next(r for r in custody_report() if r["technician"] == tech.id)
+    entries = TechnicianCustody.objects.filter(technician=tech).select_related("closing", "created_by")
+    return Response({**row, "entries": TechnicianCustodySerializer(entries, many=True).data})
+
+
+@api_view(["POST"])
+@permission_classes([IsManager])
+def manager_custody_settle(request):
+    s = SettleCustodySerializer(data=request.data)
+    s.is_valid(raise_exception=True)
+    d = s.validated_data
+    tech = get_object_or_404(User, pk=d["technician"], role=User.Role.TECHNICIAN)
+    row = settle_custody(tech, d["amount"], request.user, d["reason"])
+    return Response(TechnicianCustodySerializer(row).data, status=201)

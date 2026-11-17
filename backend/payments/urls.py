@@ -19,5 +19,7 @@ urlpatterns = [
     path("technician/closing/", views.technician_closing, name="technician-closing"),
     path("manage/wallets/credit/", views.manager_wallet_credit, name="manage-wallet-credit"),
     path("manage/wallets/<int:customer_id>/", views.manager_customer_wallet, name="manage-wallet"),
+    path("manage/technician-custody/", views.manager_custody, name="manage-custody"),
+    path("manage/technician-custody/settle/", views.manager_custody_settle, name="manage-custody-settle"),
     path("manage/orders/<int:pk>/money/", views.manager_order_money, name="manage-order-money"),
 ] + router.urls

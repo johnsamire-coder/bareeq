@@ -176,9 +176,47 @@ class DailyClosing(models.Model):
     confirmed_by = models.ForeignKey(django_settings.AUTH_USER_MODEL, null=True, blank=True,
                                      on_delete=models.PROTECT, related_name="+")
     confirmed_at = models.DateTimeField(null=True, blank=True)
+    confirm_reason = models.CharField("سبب الفرق (المدير)", max_length=300, blank=True)
 
     class Meta:
         unique_together = [("technician", "date")]
         ordering = ["-date"]
         verbose_name = "تقفيل يومي"
         verbose_name_plural = "التقفيل اليومي"
+
+
+class TechnicianCustody(models.Model):
+    """One immutable line in a technician's custody (عهدة) account.
+
+    shortage: he handed over less cash than he collected (he owes it).
+    overage: he handed over more (recorded; reduces what he owes).
+    settlement: the manager recorded that he paid back / it was deducted.
+    Balance = shortages - overages - settlements. Amounts are positive piastres."""
+
+    class Kind(models.TextChoices):
+        SHORTAGE = "shortage", "عجز"
+        OVERAGE = "overage", "زيادة"
+        SETTLEMENT = "settlement", "سداد"
+
+    technician = models.ForeignKey(django_settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+                                   related_name="custody_entries")
+    closing = models.ForeignKey(DailyClosing, null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="custody_entries")
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    amount = models.PositiveIntegerField("المبلغ (قرش)")
+    note = models.CharField("السبب", max_length=300)
+    created_by = models.ForeignKey(django_settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name = "عهدة فني"
+        verbose_name_plural = "عهدة الفنيين"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValueError("Custody rows are never edited; add a new row instead.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Custody rows are never deleted.")

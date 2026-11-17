@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DailyClosing, Invoice, Material, Payment, WalletEntry
+from .models import DailyClosing, Invoice, Material, Payment, TechnicianCustody, WalletEntry
 
 
 class WalletEntrySerializer(serializers.ModelSerializer):
@@ -57,7 +57,7 @@ class DailyClosingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DailyClosing
         fields = ["id", "technician", "technician_name", "date", "cash_expected", "cash_handed", "difference",
-                  "note", "status", "submitted_at", "confirmed_by", "confirmed_at"]
+                  "note", "status", "submitted_at", "confirmed_by", "confirmed_at", "confirm_reason"]
 
 
 class MaterialItemSerializer(serializers.Serializer):
@@ -82,4 +82,21 @@ class ManualCreditSerializer(serializers.Serializer):
 
 
 class ReasonSerializer(serializers.Serializer):
+    reason = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class TechnicianCustodySerializer(serializers.ModelSerializer):
+    kind_label = serializers.CharField(source="get_kind_display", read_only=True)
+    closing_date = serializers.DateField(source="closing.date", read_only=True, default=None)
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True)
+
+    class Meta:
+        model = TechnicianCustody
+        fields = ["id", "kind", "kind_label", "amount", "note", "closing", "closing_date", "created_by_name",
+                  "created_at"]
+
+
+class SettleCustodySerializer(serializers.Serializer):
+    technician = serializers.IntegerField()
+    amount = serializers.IntegerField(min_value=1)
     reason = serializers.CharField(required=False, allow_blank=True, default="")
