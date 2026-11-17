@@ -9,6 +9,7 @@ import 'core/theme.dart';
 import 'screens/auth/terms_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/staff_placeholder.dart';
+import 'screens/manager/manager_home.dart';
 import 'screens/tech/tech_home.dart';
 
 void main() {
@@ -56,6 +57,7 @@ class RootGate extends StatelessWidget {
     if (s.needsTerms) return const TermsScreen(reaccept: true);
     if (s.role == 'customer') return const HomeScreen();
     if (s.role == 'technician') return const TechHome();
-    return const StaffPlaceholder(); // manager screens: steps 13-16
+    if (s.role == 'manager') return const ManagerHome();
+    return const StaffPlaceholder(); // supervisor: phase 4
   }
 }

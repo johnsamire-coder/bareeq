@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +6,7 @@ import '../../core/format.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/photo_grid.dart';
 import '../booking/checkout_screen.dart';
 import '../booking/slots_screen.dart';
 import 'damage_report_screen.dart';
@@ -148,7 +147,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       ],
       if (_photos.isNotEmpty) ...[
         const SectionTitle('صور قبل وبعد'),
-        _PhotoGrid(photos: _photos),
+        PhotoGrid(photos: _photos),
       ],
       const SizedBox(height: 16),
       if (status == 'pending_payment')
@@ -182,40 +181,5 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
       ],
     ]);
-  }
-}
-
-class _PhotoGrid extends StatelessWidget {
-  const _PhotoGrid({required this.photos});
-  final List<dynamic> photos;
-
-  @override
-  Widget build(BuildContext context) {
-    const sides = {'front': 'قدام', 'back': 'ورا', 'left': 'شمال', 'right': 'يمين'};
-    final api = context.read<Session>().api;
-    return GridView.count(
-      crossAxisCount: 4,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 6,
-      crossAxisSpacing: 6,
-      children: [
-        for (final p in photos)
-          Column(children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: FutureBuilder<Uint8List>(
-                  future: api.bytes('${p['url']}'),
-                  builder: (_, snap) => snap.hasData
-                      ? Image.memory(snap.data!, fit: BoxFit.cover, width: double.infinity)
-                      : Container(color: BrandColors.razaz),
-                ),
-              ),
-            ),
-            Text('${p['stage'] == 'before' ? 'قبل' : 'بعد'} • ${sides[p['side']]}', style: const TextStyle(fontSize: 10)),
-          ]),
-      ],
-    );
   }
 }

@@ -85,6 +85,8 @@ class RatingTests(TestCase):
         rows = c.get("/api/manage/ratings/", {"bad": 1, "unhandled": 1}).json()
         self.assertEqual([x["id"] for x in rows], [rid])
         self.assertTrue(rows[0]["call_requested"])
+        self.assertEqual(len(rows[0]["photos"]), 1)
+        self.assertEqual(c.get(rows[0]["photos"][0]).status_code, 200)  # manager opens the customer's photo
         s = c.get("/api/manage/ratings/summary/").json()
         self.assertEqual(s["by_technician"][0]["average"], 2.0)
         self.assertEqual(s["by_zone"][0]["zone"], "مدينة نصر")

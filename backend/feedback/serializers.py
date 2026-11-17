@@ -25,11 +25,15 @@ class RatingSerializer(serializers.ModelSerializer):
     zone_name = serializers.CharField(source="zone.name", read_only=True)
     tag_names = serializers.SerializerMethodField()
     photo_count = serializers.IntegerField(source="photos.count", read_only=True)
+    photos = serializers.SerializerMethodField()
+
+    def get_photos(self, obj):
+        return [f"/api/rating-photos/{p.id}/file/" for p in obj.photos.all()]
 
     class Meta:
         model = Rating
         fields = ["id", "order", "stars", "tag_names", "comment", "call_requested", "technician", "technician_name",
-                  "customer_name", "customer_phone", "zone_name", "photo_count", "created_at", "handled_at",
+                  "customer_name", "customer_phone", "zone_name", "photo_count", "photos", "created_at", "handled_at",
                   "handled_by", "handle_note"]
 
     def get_tag_names(self, obj):

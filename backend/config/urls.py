@@ -3,6 +3,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from core import views
+from core.inbox import manager_inbox
 
 router = DefaultRouter()
 router.register("settings", views.SettingViewSet, basename="setting")
@@ -10,6 +11,7 @@ router.register("settings", views.SettingViewSet, basename="setting")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", views.health, name="health"),
+    path("api/manage/inbox/", manager_inbox, name="manager-inbox"),
     path("api/", include(router.urls)),
     path("api/", include("accounts.urls")),
     path("api/", include("cars.urls")),

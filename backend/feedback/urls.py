@@ -16,4 +16,5 @@ urlpatterns = [
     path("orders/<int:pk>/damage-report/", views.damage_report, name="order-damage-report"),
     path("damage-reports/<int:pk>/photos/", views.damage_photo, name="damage-photos"),
     path("damage-photos/<int:pk>/file/", views.damage_photo_file, name="damage-photo-file"),
+    path("rating-photos/<int:pk>/file/", views.rating_photo_file, name="rating-photo-file"),
 ] + router.urls

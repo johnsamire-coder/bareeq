@@ -1,10 +1,14 @@
 from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 
 from accounts.permissions import IsCustomer, IsManager
 
+from core.errors import BusinessError
+
+from .geo import InvalidPolygon, point_in_polygon, polygons_overlap, validate_polygon
 from .models import Address, AreaRequest, Zone
 from .serializers import AddressSerializer, AreaRequestSerializer, PointSerializer, ZoneSerializer, ZoneShortSerializer
 from .services import find_zone
@@ -33,6 +37,30 @@ class ZoneViewSet(
         if not IsManager().has_permission(self.request, self):
             qs = qs.filter(is_active=True)
         return qs
+
+    @action(detail=False, methods=["post"])
+    def preview(self, request):
+        """Before saving a drawn shape: how many saved addresses fall inside, how many
+        currently served addresses would drop OUT of service, and overlaps."""
+        if not IsManager().has_permission(request, self):
+            return Response({"code": "forbidden", "detail": "مش مسموح."}, status=403)
+        try:
+            polygon = validate_polygon(request.data.get("polygon"))
+        except InvalidPolygon as e:
+            raise BusinessError("bad_polygon", str(e))
+        zone_id = request.data.get("zone")
+        others = [z for z in Zone.objects.filter(is_active=True) if str(z.id) != str(zone_id)]
+        inside = left_out = 0
+        for a in Address.objects.filter(is_active=True).only("lat", "lng", "zone_id"):
+            if point_in_polygon(a.lat, a.lng, polygon):
+                inside += 1
+            elif zone_id and str(a.zone_id) == str(zone_id) and not any(z.contains(a.lat, a.lng) for z in others):
+                left_out += 1
+        return Response({
+            "addresses_inside": inside,
+            "addresses_dropping_out": left_out,
+            "overlaps_with": [z.name for z in others if polygons_overlap(polygon, z.polygon)],
+        })
 
 
 @api_view(["GET"])

@@ -24,3 +24,13 @@ class GeoTests(SimpleTestCase):
                     [[0, 0], [1, 1], ["a", 0]], [[0, 0], [1, 1], [1]], [[True, 0], [1, 1], [2, 2]]):
             with self.assertRaises(InvalidPolygon, msg=bad):
                 validate_polygon(bad)
+
+
+class OverlapTests(SimpleTestCase):
+    def test_overlap_cases(self):
+        from places.geo import polygons_overlap
+
+        a = [[0, 0], [0, 10], [10, 10], [10, 0]]
+        self.assertTrue(polygons_overlap(a, [[5, 5], [5, 15], [15, 15], [15, 5]]))     # corners cross
+        self.assertTrue(polygons_overlap(a, [[2, 2], [2, 4], [4, 4], [4, 2]]))         # one inside the other
+        self.assertFalse(polygons_overlap(a, [[20, 20], [20, 30], [30, 30], [30, 20]]))  # apart

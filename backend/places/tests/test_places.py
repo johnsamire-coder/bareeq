@@ -166,3 +166,24 @@ class AreaRequestTests(TestCase):
         r = self.client.post("/api/area-requests/", {"lat": CITY_STARS[0], "lng": CITY_STARS[1]}, format="json")
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.json()["code"], "inside_service_area")
+
+
+class ZonePreviewTests(TestCase):
+    def test_preview_counts_and_overlaps(self):
+        manager = User.objects.create_user("01000000001", "Boss", role="manager")
+        customer = User.objects.create_user("01012345678", "Cust")
+        nasr = Zone.objects.get(name="مدينة نصر")
+        Address.objects.create(customer=customer, label="x", lat=CITY_STARS[0], lng=CITY_STARS[1], building="1", zone=nasr)
+        c = APIClient()
+        c.force_authenticate(customer)
+        self.assertEqual(c.post("/api/zones/preview/", {}, format="json").status_code, 403)
+        c.force_authenticate(manager)
+        # A tiny new Nasr City shape far from City Stars: the saved address would drop out.
+        r = c.post("/api/zones/preview/", {"zone": nasr.id, "polygon": [[30.0, 31.0], [30.01, 31.0], [30.01, 31.01]]}, format="json").json()
+        self.assertEqual((r["addresses_inside"], r["addresses_dropping_out"], r["overlaps_with"]), (0, 1, []))
+        # A big shape over Nasr City and Madinaty: overlaps both, address inside.
+        big = [[30.0, 31.3], [30.15, 31.3], [30.15, 31.7], [30.0, 31.7]]  # stops below Obour (30.185)
+        r = c.post("/api/zones/preview/", {"polygon": big}, format="json").json()
+        self.assertEqual(r["addresses_inside"], 1)
+        self.assertEqual(sorted(r["overlaps_with"]), sorted(["مدينة نصر", "مدينتي"]))
+        self.assertEqual(c.post("/api/zones/preview/", {"polygon": [[1, 1]]}, format="json").json()["code"], "bad_polygon")

@@ -44,3 +44,29 @@ def point_in_polygon(lat, lng, polygon):
             if x < x_cross:
                 inside = not inside
     return inside
+
+
+def _segments_cross(p1, p2, q1, q2):
+    """True when segment p1-p2 crosses segment q1-q2 (points are [lat, lng])."""
+    def orient(a, b, c):
+        v = (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1])
+        return 0 if abs(v) < 1e-15 else (1 if v > 0 else -1)
+
+    def on_segment(a, b, c):
+        return min(a[0], b[0]) <= c[0] <= max(a[0], b[0]) and min(a[1], b[1]) <= c[1] <= max(a[1], b[1])
+
+    o1, o2, o3, o4 = orient(p1, p2, q1), orient(p1, p2, q2), orient(q1, q2, p1), orient(q1, q2, p2)
+    if o1 != o2 and o3 != o4:
+        return True
+    return ((o1 == 0 and on_segment(p1, p2, q1)) or (o2 == 0 and on_segment(p1, p2, q2))
+            or (o3 == 0 and on_segment(q1, q2, p1)) or (o4 == 0 and on_segment(q1, q2, p2)))
+
+
+def polygons_overlap(a, b):
+    """True when two zone shapes share any area (edges cross, or one is inside the other)."""
+    n, m = len(a), len(b)
+    for i in range(n):
+        for j in range(m):
+            if _segments_cross(a[i], a[(i + 1) % n], b[j], b[(j + 1) % m]):
+                return True
+    return point_in_polygon(a[0][0], a[0][1], b) or point_in_polygon(b[0][0], b[0][1], a)

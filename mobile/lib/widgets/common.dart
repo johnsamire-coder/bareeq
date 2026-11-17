@@ -201,3 +201,44 @@ Future<bool> confirmDialog(BuildContext context, String title, String body, {Str
   );
   return r == true;
 }
+
+/// Asks for a short text (a reason, a note). Returns null when cancelled.
+Future<String?> askText(BuildContext context, String title, {String hint = '', String ok = 'تمام', bool required = true}) async {
+  final c = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (d) => StatefulBuilder(
+      builder: (d, set) => AlertDialog(
+        title: Text(title),
+        content: TextField(controller: c, autofocus: true, maxLines: 3, decoration: InputDecoration(hintText: hint),
+            onChanged: (_) => set(() {})),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: const Text('رجوع')),
+          FilledButton(onPressed: required && c.text.trim().isEmpty ? null : () => Navigator.pop(d, c.text.trim()), child: Text(ok)),
+        ],
+      ),
+    ),
+  );
+}
+
+/// A protected image (InstaPay screenshot, rating/damage photo) by server path.
+class ServerImage extends StatelessWidget {
+  const ServerImage(this.path, {super.key, required this.loader, this.height = 160});
+  final String path;
+  final Future<dynamic> Function(String) loader;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: height,
+        child: FutureBuilder(
+          future: loader(path),
+          builder: (_, snap) => snap.hasData
+              ? GestureDetector(
+                  onTap: () => showDialog(context: context, builder: (_) => Dialog(child: InteractiveViewer(child: Image.memory(snap.data)))),
+                  child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.memory(snap.data, fit: BoxFit.cover, width: double.infinity)),
+                )
+              : Container(decoration: BoxDecoration(color: BrandColors.razaz, borderRadius: BorderRadius.circular(10))),
+        ),
+      );
+}

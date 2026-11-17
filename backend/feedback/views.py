@@ -85,6 +85,17 @@ def damage_photo(request, pk):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+def rating_photo_file(request, pk):
+    from .models import RatingPhoto
+
+    p = get_object_or_404(RatingPhoto.objects.select_related("rating"), pk=pk)
+    if not (request.user.role == "manager" or request.user.id == p.rating.customer_id):
+        return Response({"code": "forbidden", "detail": "مش مسموح."}, status=403)
+    return FileResponse(p.image.open("rb"), content_type="image/jpeg")
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def damage_photo_file(request, pk):
     p = get_object_or_404(DamagePhoto.objects.select_related("report"), pk=pk)
     if not (request.user.role == "manager" or request.user.id == p.report.customer_id):
