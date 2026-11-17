@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "core",
     "cars",
     "places",
+    "services",
 ]
 
 MIDDLEWARE = [

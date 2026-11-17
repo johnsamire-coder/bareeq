@@ -134,6 +134,15 @@ DEFAULT_SETTINGS = [
         "value_type": "integer",
         "value": 1,
     },
+    # Services (SPEC section 5)
+    {
+        "key": "services-block-needs-shade-on-street",
+        "group": "services",
+        "label": "منع خدمات «محتاجة ضل» لو العربية في الشارع",
+        "description": "لو «لا»: التطبيق بينبه العميل بس. لو «نعم»: بيمنعه يطلبها.",
+        "value_type": "boolean",
+        "value": False,
+    },
     # Wallet (SPEC section 11)
     {
         "key": "wallet-max-order-share-percent",
