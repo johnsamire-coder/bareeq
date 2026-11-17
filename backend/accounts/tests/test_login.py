@@ -216,7 +216,7 @@ class LoginApiTests(TestCase):
         self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
         v2 = TermsVersion.objects.create(text="نسخة 2")
         self.assertTrue(self.client.get("/api/me/").json()["needs_terms_acceptance"])
-        self.assertEqual(self.client.post("/api/terms/accept/", {"terms_version": 1}, format="json").status_code, 400)
+        self.assertEqual(self.client.post("/api/terms/accept/", {"terms_version": 2}, format="json").status_code, 400)
         self.assertEqual(
             self.client.post("/api/terms/accept/", {"terms_version": v2.version}, format="json").status_code, 200
         )
@@ -226,7 +226,7 @@ class LoginApiTests(TestCase):
         TermsVersion.objects.create(text="نسخة 2")
         r = self.client.get("/api/terms/current/")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()["version"], 2)  # newest version wins
+        self.assertEqual(r.json()["version"], 3)  # newest version wins
         self.assertEqual(r.json()["text"], "نسخة 2")
 
     def test_heard_about_list_public(self):
@@ -248,7 +248,7 @@ class TermsVersionTests(TestCase):
     def test_versions_number_themselves_and_are_frozen(self):
         a = TermsVersion.objects.create(text="a")
         b = TermsVersion.objects.create(text="b")
-        self.assertEqual((a.version, b.version), (2, 3))
+        self.assertEqual((a.version, b.version), (3, 4))
         self.assertEqual(TermsVersion.current(), b)
         a.text = "changed"
         with self.assertRaises(ValueError):

@@ -99,6 +99,24 @@ DEFAULT_SETTINGS = [
         "value": 5000,
         "mentioned_in_terms": True,
     },
+    {
+        "key": "car-not-found-wait-minutes",
+        "group": "cancellation",
+        "label": "الفني يستنى قد إيه قبل «العربية مش موجودة»",
+        "description": "بعد ما الفني يتصل بالعميل. زرار «العربية مش موجودة» بيشتغل بعد المدة دي.",
+        "value_type": "minutes",
+        "value": 15,
+        "mentioned_in_terms": True,
+    },
+    {
+        "key": "damage-report-within-hours",
+        "group": "cancellation",
+        "label": "مدة الإبلاغ عن ضرر بعد خلاص الغسلة",
+        "description": "بعد المدة دي التطبيق مبيقبلش بلاغ ضرر للطلب ده.",
+        "value_type": "hours",
+        "value": 24,
+        "mentioned_in_terms": True,
+    },
     # Cars (SPEC section 3)
     {
         "key": "cars-first-year",

@@ -1,10 +1,18 @@
-"""First published terms text (version 1). Same text as docs/TERMS-ar.md,
-which is the copy for review and for sending to the client."""
+"""Terms texts published by migrations. docs/TERMS-ar.md is always a copy of
+the latest one, for review and for sending to the client."""
 from pathlib import Path
 
-# Kept next to the code so the server does not depend on the docs folder.
-TERMS_V1_PATH = Path(__file__).with_name("terms_v1_ar.md")
+_HERE = Path(__file__).parent
 
 
 def terms_v1_text():
-    return TERMS_V1_PATH.read_text(encoding="utf-8")
+    return (_HERE / "terms_v1_ar.md").read_text(encoding="utf-8")
+
+
+def terms_v2_text():
+    """v2: adds the 15-minute wait for 'car not found' and the 24-hour damage report window."""
+    return (_HERE / "terms_v2_ar.md").read_text(encoding="utf-8")
+
+
+def latest_terms_text():
+    return terms_v2_text()

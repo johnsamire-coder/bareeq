@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import TermsVersion, User
 from accounts.services import terms_outdated_settings
-from accounts.terms_v1 import terms_v1_text
+from accounts.terms_v1 import latest_terms_text, terms_v1_text, terms_v2_text
 from core.models import Setting
 from core.services import get_setting
 
@@ -13,27 +13,31 @@ DOCS_COPY = Path(__file__).resolve().parents[3] / "docs" / "TERMS-ar.md"
 
 
 class TermsV1Tests(TestCase):
-    def test_version_1_published_by_migration(self):
-        self.assertEqual(TermsVersion.current().version, 1)
-        self.assertEqual(TermsVersion.current().text, terms_v1_text())
+    def test_versions_1_and_2_published_by_migrations(self):
+        self.assertEqual(TermsVersion.objects.get(version=1).text, terms_v1_text())
+        self.assertEqual(TermsVersion.current().version, 2)
+        self.assertEqual(TermsVersion.current().text, terms_v2_text())
 
     def test_docs_copy_is_identical(self):
         if not DOCS_COPY.exists():
             self.skipTest("docs folder not deployed here")
-        self.assertEqual(DOCS_COPY.read_text(encoding="utf-8"), terms_v1_text())
+        self.assertEqual(DOCS_COPY.read_text(encoding="utf-8"), latest_terms_text())
 
     def test_terms_numbers_are_marked_on_a_fresh_database(self):
         marked = set(Setting.objects.filter(mentioned_in_terms=True).values_list("key", flat=True))
-        self.assertEqual(marked, {"cancellation-free-until-hours", "cancellation-late-fee", "car-not-found-fee"})
+        self.assertEqual(marked, {"cancellation-free-until-hours", "cancellation-late-fee", "car-not-found-fee",
+                                  "car-not-found-wait-minutes", "damage-report-within-hours"})
 
     def test_required_sections_present(self):
-        text = terms_v1_text()
+        text = latest_terms_text()
         for heading in ("الخدمة بتتعمل إزاي", "المواعيد", "الإلغاء والتأجيل", "ملقاش العربية", "الدفع",
                         "صور قبل وبعد", "الخدوش", "بياناتك"):
             self.assertIn(heading, text)
 
     def test_numbers_in_text_match_settings(self):
-        text = terms_v1_text()
+        text = latest_terms_text()
+        self.assertIn(f"**{get_setting('car-not-found-wait-minutes')} دقيقة**", text)
+        self.assertIn(f"**{get_setting('damage-report-within-hours')} ساعة**", text)
         hours = get_setting("cancellation-free-until-hours")
         self.assertEqual(hours, 2)
         self.assertIn("**ساعتين** قبل الميعاد", text)
@@ -52,7 +56,7 @@ class TermsOutdatedTests(TestCase):
 
     def test_fresh_install_is_up_to_date(self):
         self.assertEqual(terms_outdated_settings(), [])
-        self.assertEqual(self.status(), {"current_version": 1, "needs_new_version": False, "changed_settings": []})
+        self.assertEqual(self.status(), {"current_version": 2, "needs_new_version": False, "changed_settings": []})
 
     def test_changing_a_terms_number_asks_for_new_version(self):
         r = self.client.patch("/api/settings/cancellation-late-fee/", {"value": 7500}, format="json")
