@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/api.dart';
 import '../../core/session.dart';
+import '../../core/theme.dart';
 import '../../widgets/common.dart';
 import '../setup_screen.dart';
 
@@ -13,9 +14,13 @@ class CodeScreen extends StatefulWidget {
     super.key,
     required this.phone,
     required this.termsVersion,
+    this.demoCode,
   });
   final String phone;
   final int termsVersion;
+
+  /// Test mode only: the code, shown on screen instead of an SMS.
+  final String? demoCode;
 
   @override
   State<CodeScreen> createState() => _CodeScreenState();
@@ -26,6 +31,14 @@ class _CodeScreenState extends State<CodeScreen> {
   final _name = TextEditingController();
   final _referral = TextEditingController();
   bool _signup = false;
+  String? _demoCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _demoCode = widget.demoCode;
+  }
+
   List<dynamic> _heard = [];
   int? _heardId;
 
@@ -72,10 +85,13 @@ class _CodeScreenState extends State<CodeScreen> {
   }
 
   Future<void> _resend() async {
-    await context.read<Session>().api.post('auth/otp/request/', {
+    final r = await context.read<Session>().api.post('auth/otp/request/', {
       'phone': widget.phone,
       'device_id': 'app',
     });
+    if (r is Map && r['demo_code'] != null) {
+      setState(() => _demoCode = '${r['demo_code']}');
+    }
     if (mounted) showInfo(context, 'بعتنا كود جديد.');
   }
 
@@ -94,6 +110,37 @@ class _CodeScreenState extends State<CodeScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
+          if (_demoCode != null) ...[
+            const SizedBox(height: 12),
+            Card(
+              color: BrandColors.lamaa.withValues(alpha: 0.25),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    const Text(
+                      'نسخة تجريبية: الكود بيظهر هنا بدل رسالة',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    SelectableText(
+                      _demoCode!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        letterSpacing: 6,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() => _code.text = _demoCode!),
+                      child: const Text('حطه في الخانة'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(
             controller: _code,

@@ -42,6 +42,7 @@ class BareeqApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      builder: (context, child) => DemoBanner(child: child!),
       home: const RootGate(),
     );
   }
@@ -63,5 +64,49 @@ class RootGate extends StatelessWidget {
     if (s.role == 'technician') return const TechHome();
     if (s.role == 'manager') return const ManagerHome();
     return const StaffPlaceholder(); // supervisor: phase 4
+  }
+}
+
+/// A clear strip on top of every screen while the test mode is on.
+class DemoBanner extends StatelessWidget {
+  const DemoBanner({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!context.watch<Session>().demoMode) return child;
+    final top = MediaQuery.paddingOf(context).top;
+    return Column(
+      children: [
+        Material(
+          color: BrandColors.lamaa,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(8, top + 4, 8, 4),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.science_outlined, size: 18, color: BrandColors.layl),
+                SizedBox(width: 6),
+                Text(
+                  'نسخة تجريبية',
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontWeight: FontWeight.w800,
+                    color: BrandColors.layl,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: child,
+          ),
+        ),
+      ],
+    );
   }
 }

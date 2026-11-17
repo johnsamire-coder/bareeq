@@ -18,7 +18,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
 
   Future<void> _send() async {
     final api = context.read<Session>().api;
-    await api.post('auth/otp/request/', {
+    final r = await api.post('auth/otp/request/', {
       'phone': _phone.text.trim(),
       'device_id': 'app',
     });
@@ -28,6 +28,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
         builder: (_) => CodeScreen(
           phone: _phone.text.trim(),
           termsVersion: widget.termsVersion,
+          demoCode: r is Map ? r['demo_code'] as String? : null,
         ),
       ),
     );

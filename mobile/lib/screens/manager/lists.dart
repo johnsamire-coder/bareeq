@@ -71,8 +71,10 @@ Widget bundlesScreen() => CrudScreen(
 Widget oilTypesScreen() => CrudScreen(
   title: 'أنواع الزيت',
   endpoint: 'manage/oil-types/',
-  note: 'الشركة بتبيع الزيت بسعر التكلفة، وبيظهر للعميل في سطر لوحده.',
-  itemTitle: (r) => '${r['name']} • ${money(r['price'])}',
+  note:
+      'الشركة بتبيع الزيت بسعر التكلفة، وبيظهر للعميل في سطر لوحده. '
+      'اللي عليه «تجريبي» سعره لسه مش حقيقي، وأول ما تعدله العلامة بتتشال.',
+  itemTitle: (r) => '${r['name']} • ${money(r['price'])}${testMark(r)}',
   itemSubtitle: (r) => '${r['description']}',
   newDefaults: const {'is_active': true},
   fields: const [
@@ -86,8 +88,10 @@ Widget oilTypesScreen() => CrudScreen(
 Widget materialsScreen() => CrudScreen(
   title: 'الخامات',
   endpoint: 'manage/materials/',
-  note: 'الفني بيكتب الكمية بس، والتكلفة بتتحسب بسعر الوحدة يومها.',
-  itemTitle: (r) => '${r['name']}',
+  note:
+      'الفني بيكتب الكمية بس، والتكلفة بتتحسب بسعر الوحدة يومها. '
+      'اللي عليه «تجريبي» سعره لسه مش حقيقي، وأول ما تعدله العلامة بتتشال.',
+  itemTitle: (r) => '${r['name']}${testMark(r)}',
   itemSubtitle: (r) => '${money(r['unit_cost'])} لكل ${r['unit_label']}',
   newDefaults: const {'is_active': true, 'unit': 'liter'},
   fields: [
@@ -205,3 +209,6 @@ Widget ratingTagsScreen() => CrudScreen(
     FieldSpec('is_active', 'ظاهرة', FieldType.boolean),
   ],
 );
+
+/// " • تجريبي" after a test price that the manager hasn't confirmed yet.
+String testMark(Map r) => r['is_provisional'] == true ? ' • تجريبي' : '';

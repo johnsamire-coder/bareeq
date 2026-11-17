@@ -24,6 +24,7 @@ const groupNames = {
 
 String settingValue(Map s) {
   final v = s['value'];
+  if (v == null) return 'فاضي';
   switch (s['value_type']) {
     case 'money':
       return money(v as int);
@@ -76,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else if (type == 'money') {
       value = await askPounds(context, '${s['label']}', s['value'] as int);
     } else {
-      final c = TextEditingController(text: '${s['value']}');
+      final c = TextEditingController(text: '${s['value'] ?? ''}');
       final r = await showDialog<String>(
         context: context,
         builder: (d) => AlertDialog(
@@ -108,12 +109,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
       if (r == null) return;
+      if (r.isEmpty && s['allow_empty'] == true) {
+        await _save(s, null);
+        return;
+      }
       value = type == 'text' ? r : int.tryParse(r);
       if (value == null) throw ApiError('bad', 'اكتب رقم صحيح.');
     }
     if (value == null) return;
+    await _save(s, value);
+  }
+
+  Future<void> _save(Map s, dynamic value) async {
     await _api.patch('settings/${s['key']}/', {'value': value});
     await _load();
+    if (s['key'] == 'demo-mode' && mounted) {
+      await context.read<Session>().loadConfig();
+    }
     if (s['mentioned_in_terms'] == true && mounted) {
       showInfo(context, 'الرقم ده مكتوب في الشروط: انشر نسخة شروط جديدة.');
     }

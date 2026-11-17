@@ -10,11 +10,23 @@ class Session extends ChangeNotifier {
   Map<String, dynamic>? user;
   bool loading = true;
 
+  /// Test version: the login code shows on screen and a banner says so.
+  bool demoMode = false;
+
   bool get loggedIn => api.token != null && user != null;
   String get role => '${user?['role'] ?? ''}';
   bool get needsTerms => user?['needs_terms_acceptance'] == true;
 
+  Future<void> loadConfig() async {
+    try {
+      final c = await api.get('app-config/');
+      demoMode = c['demo_mode'] == true;
+      notifyListeners();
+    } catch (_) {}
+  }
+
   Future<void> restore() async {
+    await loadConfig();
     final prefs = await SharedPreferences.getInstance();
     api.token = prefs.getString('token');
     if (api.token != null) {
