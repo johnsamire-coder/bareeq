@@ -12,6 +12,7 @@ urlpatterns = [
     path("auth/logout/", views.logout, name="logout"),
     path("me/", views.MeView.as_view(), name="me"),
     path("terms/current/", views.current_terms, name="terms-current"),
+    path("terms/status/", views.terms_status, name="terms-status"),
     path("terms/accept/", views.accept_terms, name="terms-accept"),
     path("heard-about-options/", views.HeardAboutListView.as_view(), name="heard-about-options"),
 ] + router.urls

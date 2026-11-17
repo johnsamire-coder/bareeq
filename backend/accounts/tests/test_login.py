@@ -25,7 +25,7 @@ class LoginApiTests(TestCase):
     def setUp(self):
         SENT.clear()
         self.client = APIClient()
-        self.terms = TermsVersion.objects.create(text="الشروط نسخة 1")
+        self.terms = TermsVersion.current()
 
     # helpers
     def request_code(self, phone=PHONE, device="dev-1"):
@@ -226,7 +226,7 @@ class LoginApiTests(TestCase):
         TermsVersion.objects.create(text="نسخة 2")
         r = self.client.get("/api/terms/current/")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()["version"], 2)
+        self.assertEqual(r.json()["version"], 2)  # newest version wins
         self.assertEqual(r.json()["text"], "نسخة 2")
 
     def test_heard_about_list_public(self):
@@ -246,9 +246,9 @@ class LoginApiTests(TestCase):
 
 class TermsVersionTests(TestCase):
     def test_versions_number_themselves_and_are_frozen(self):
-        a = TermsVersion.objects.create(text="1")
-        b = TermsVersion.objects.create(text="2")
-        self.assertEqual((a.version, b.version), (1, 2))
+        a = TermsVersion.objects.create(text="a")
+        b = TermsVersion.objects.create(text="b")
+        self.assertEqual((a.version, b.version), (2, 3))
         self.assertEqual(TermsVersion.current(), b)
         a.text = "changed"
         with self.assertRaises(ValueError):

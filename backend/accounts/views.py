@@ -15,7 +15,7 @@ from .serializers import (
     TermsSerializer,
     UserSerializer,
 )
-from .services import OtpError, accept_current_terms, request_otp, verify_otp
+from .services import OtpError, accept_current_terms, request_otp, terms_outdated_settings, verify_otp
 
 
 def _error(e: OtpError):
@@ -103,3 +103,18 @@ class TechnicianViewSet(
     serializer_class = TechnicianSerializer
     permission_classes = [IsManager]
     http_method_names = ["get", "post", "patch", "head", "options"]
+
+
+@api_view(["GET"])
+@permission_classes([IsManager])
+def terms_status(request):
+    """For the dashboard: do the published terms still match the settings?"""
+    changed = terms_outdated_settings()
+    current = TermsVersion.current()
+    return Response(
+        {
+            "current_version": current.version if current else None,
+            "needs_new_version": bool(changed) or current is None,
+            "changed_settings": [{"key": s.key, "label": s.label, "value": s.value} for s in changed],
+        }
+    )

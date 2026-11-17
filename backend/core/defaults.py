@@ -71,6 +71,34 @@ DEFAULT_SETTINGS = [
         "value_type": "integer",
         "value": 5,
     },
+    # Cancellation (SPEC section 7). These numbers are written in the terms text.
+    {
+        "key": "cancellation-free-until-hours",
+        "group": "cancellation",
+        "label": "الإلغاء أو التأجيل ببلاش لحد قبل الميعاد بـ",
+        "description": "بعد كده بتتحسب رسوم الإلغاء المتأخر.",
+        "value_type": "hours",
+        "value": 2,
+        "mentioned_in_terms": True,
+    },
+    {
+        "key": "cancellation-late-fee",
+        "group": "cancellation",
+        "label": "رسوم الإلغاء أو التأجيل المتأخر (بالقرش)",
+        "description": "5000 قرش = 50 جنيه.",
+        "value_type": "money",
+        "value": 5000,
+        "mentioned_in_terms": True,
+    },
+    {
+        "key": "car-not-found-fee",
+        "group": "cancellation",
+        "label": "رسوم «الفني وصل وملقاش العربية» (بالقرش)",
+        "description": "5000 قرش = 50 جنيه.",
+        "value_type": "money",
+        "value": 5000,
+        "mentioned_in_terms": True,
+    },
     # Cars (SPEC section 3)
     {
         "key": "cars-first-year",
@@ -144,10 +172,18 @@ DEFAULT_SETTINGS = [
 
 def seed_default_settings(SettingModel):
     """Create any missing default settings. Returns the number created."""
+    # Older migrations call this with an older version of the table, so only
+    # pass the columns that exist at that point.
+    columns = {f.name for f in SettingModel._meta.get_fields()}
     created = 0
     for item in DEFAULT_SETTINGS:
         _, was_created = SettingModel.objects.get_or_create(
-            key=item["key"], defaults={k: v for k, v in item.items() if k != "key"}
+            key=item["key"], defaults={k: v for k, v in item.items() if k != "key" and k in columns}
         )
         created += int(was_created)
+        # "Written in the terms" is decided by us, not the manager: always keep it in sync.
+        if "mentioned_in_terms" in columns:
+            SettingModel.objects.filter(key=item["key"]).update(
+                mentioned_in_terms=item.get("mentioned_in_terms", False)
+            )
     return created

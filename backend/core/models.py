@@ -1,6 +1,7 @@
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class Setting(models.Model):
@@ -26,6 +27,10 @@ class Setting(models.Model):
     description = models.TextField("الشرح", blank=True)
     value_type = models.CharField("النوع", max_length=20, choices=ValueType.choices)
     value = models.JSONField("القيمة")
+    mentioned_in_terms = models.BooleanField(
+        "مكتوب في الشروط", default=False, help_text="لو اتغير، لازم تتنشر نسخة شروط جديدة."
+    )
+    value_changed_at = models.DateTimeField("آخر تغيير للقيمة", null=True, blank=True)
     updated_at = models.DateTimeField("آخر تعديل", auto_now=True)
     updated_by = models.ForeignKey(
         django_settings.AUTH_USER_MODEL,
@@ -72,4 +77,8 @@ class Setting(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        if self.pk:
+            old = Setting.objects.filter(pk=self.pk).values_list("value", flat=True).first()
+            if old != self.value:
+                self.value_changed_at = timezone.now()
         super().save(*args, **kwargs)

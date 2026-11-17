@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from core.models import Setting
 from core.services import get_setting
 
 from .models import OtpRequest, TermsAcceptance, TermsVersion, User, hash_code
@@ -126,3 +127,13 @@ def accept_current_terms(user, terms_version):
     if current is None or int(terms_version) != current.version:
         raise OtpError("terms_outdated", "الشروط اتحدثت. اقرا النسخة الجديدة ووافق عليها.")
     TermsAcceptance.objects.get_or_create(user=user, terms_version=current)
+
+
+def terms_outdated_settings():
+    """Settings written in the terms whose value changed after the current
+    terms version was published. Non-empty means: publish a new version."""
+    current = TermsVersion.current()
+    qs = Setting.objects.filter(mentioned_in_terms=True, value_changed_at__isnull=False)
+    if current is not None:
+        qs = qs.filter(value_changed_at__gt=current.created_at)
+    return list(qs)

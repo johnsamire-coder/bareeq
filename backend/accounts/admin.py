@@ -33,6 +33,17 @@ class TermsVersionAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return obj is None  # published text is frozen; add a new version instead
 
+    def get_changeform_initial_data(self, request):
+        # Start the new version from the current text, so only the changes need typing.
+        current = TermsVersion.current()
+        return {"text": current.text} if current else {}
+
+    def changelist_view(self, request, extra_context=None):
+        from core.admin import warn_if_terms_outdated
+
+        warn_if_terms_outdated(request)
+        return super().changelist_view(request, extra_context)
+
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         super().save_model(request, obj, form, change)
