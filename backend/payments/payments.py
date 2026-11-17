@@ -32,6 +32,7 @@ def confirm_with_payment(order, method, wallet_amount=0, proof_file=None):
     wallet_amount = int(wallet_amount or 0)
     if wallet_amount < 0:
         raise BusinessError("bad_amount", "المبلغ مش صحيح.")
+    wallet_amount = wallet.whole_pounds(wallet_amount)  # never pay piastres from the wallet
     if wallet_amount > wallet.max_usable_for(order.amount_due):
         raise BusinessError("wallet_over_limit", "مينفعش تدفع الجزء ده كله من المحفظة.")
     if method == Payment.Method.INSTAPAY and proof_file is None:

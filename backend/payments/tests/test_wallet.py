@@ -90,11 +90,12 @@ class WalletTests(TestCase):
             e = wallet.credit(self.c, 1000, "manual", created_by=self.manager, note="x")
         self.assertEqual(e.expires_at, T0 + timedelta(days=30))
 
-    def test_max_share_of_order(self):
-        self.assertEqual(wallet.max_usable_for(24300), 12150)
-        self.assertEqual(wallet.max_usable_for(24301), 12150)  # never rounds up past 50%
+    def test_max_share_of_order_whole_pounds(self):
+        # 50% of 243 EGP = 121.50 -> 121 EGP (rounded DOWN to a whole pound).
+        self.assertEqual(wallet.max_usable_for(24300), 12100)
+        self.assertEqual(wallet.max_usable_for(24400), 12200)
         Setting.objects.filter(key="wallet-max-order-share-percent").update(value=20)
-        self.assertEqual(wallet.max_usable_for(24300), 4860)
+        self.assertEqual(wallet.max_usable_for(24300), 4800)  # 48.60 -> 48
 
     def test_rows_are_never_edited_or_deleted(self):
         with frozen_now(T0):

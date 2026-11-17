@@ -197,9 +197,10 @@ def manager_wallet_credit(request):
 @api_view(["GET"])
 @permission_classes([IsManager])
 def manager_order_money(request, pk):
-    """Profit view of one order: income, oil, materials, margin."""
+    """Money view of one order: revenue next to what was really collected (the
+    difference is the wallet), oil, materials and «هامش الغسلة»."""
     o = get_object_or_404(Order, pk=pk)
     return Response({**ManagerOrderSerializer(o).data, "oil_total": o.oil_total,
-                     "materials_cost": o.materials_cost, "margin": o.margin,
+                     "materials_cost": o.materials_cost, "wash_margin": o.wash_margin,
                      "materials": [{"material": u.material.name, "quantity": str(u.quantity), "cost": u.cost}
                                    for u in o.material_usages.select_related("material")]})

@@ -48,7 +48,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ["id", "status", "status_label", "scheduled_start", "scheduled_end", "total_minutes",
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
                   "payment_method", "subtotal", "discount", "total", "charges_total", "amount_due", "wallet_used",
-                  "amount_to_collect", "items",
+                  "amount_to_collect", "revenue", "collected", "uncollected", "items",
                   "actual_start", "actual_end", "cancel_reason", "created_at"]
 
 

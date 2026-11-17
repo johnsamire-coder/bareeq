@@ -23,9 +23,15 @@ def balance(customer):
     return _live_credits(customer, timezone.now()).aggregate(s=Sum("remaining"))["s"] or 0
 
 
+def whole_pounds(piastres):
+    """Rounded DOWN to a whole pound (wallet use is always whole pounds)."""
+    return piastres // 100 * 100
+
+
 def max_usable_for(amount_due):
-    """Most of an order that can be paid from the wallet (rounded down)."""
-    return amount_due * get_setting("wallet-max-order-share-percent") // 100
+    """Most of an order that can be paid from the wallet: the % limit, rounded
+    down to a whole pound."""
+    return whole_pounds(amount_due * get_setting("wallet-max-order-share-percent") // 100)
 
 
 def credit(customer, amount, kind, expires_at=None, order=None, created_by=None, note=""):

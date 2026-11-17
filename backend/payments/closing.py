@@ -61,13 +61,21 @@ def closing_summary(technician, day):
         cash = o.payments.filter(method=Payment.Method.CASH, status=Payment.Status.COLLECTED
                                  ).aggregate(s=Sum("amount"))["s"] or 0
         rows.append({"order": o.id, "scheduled_start": o.scheduled_start, "amount_due": o.amount_due,
-                     "cash_collected": cash, "materials_cost": o.materials_cost})
+                     "revenue": o.revenue, "collected": o.collected, "wallet_used": o.wallet_used,
+                     "uncollected": o.uncollected, "cash_collected": cash, "materials_cost": o.materials_cost,
+                     "wash_margin": o.wash_margin})
     closing = DailyClosing.objects.filter(technician=technician, date=day).first()
     return {
         "date": day.isoformat(),
         "orders": rows,
         "cash_collected": sum(r["cash_collected"] for r in rows),
+        # Revenue next to real money collected; the difference is the wallet part.
+        "revenue": sum(r["revenue"] for r in rows),
+        "collected": sum(r["collected"] for r in rows),
+        "wallet_used": sum(r["wallet_used"] for r in rows),
+        "uncollected": sum(r["uncollected"] for r in rows),
         "materials_cost": sum(r["materials_cost"] for r in rows),
+        "wash_margin": sum(r["wash_margin"] for r in rows),
         "closing": None if closing is None else {
             "id": closing.id, "status": closing.status, "cash_handed": closing.cash_handed,
             "difference": closing.difference},

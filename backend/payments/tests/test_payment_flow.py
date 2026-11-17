@@ -53,15 +53,18 @@ class PaymentFlowTests(TestCase):
         with frozen_now(BEFORE - timedelta(days=1)):
             wallet.credit(self.customer, 20000, "manual", created_by=self.manager, note="تعويض")
         with self.assertRaises(BusinessError) as e:
-            self.confirm("cash", wallet_amount=12151)  # more than 50% of 243
+            self.confirm("cash", wallet_amount=12200)  # more than 50% of 243 (= 121 whole pounds)
         self.assertEqual(e.exception.detail["code"], "wallet_over_limit")
-        o = self.confirm("cash", wallet_amount=12150)
-        self.assertEqual((o.wallet_used, o.amount_to_collect), (12150, 12150))
+        o = self.confirm("cash", wallet_amount=12150)  # 121.50 -> rounded down to 121
+        self.assertEqual((o.wallet_used, o.amount_to_collect), (12100, 12200))
+        self.assertEqual(o.amount_to_collect % 100, 0)  # technician collects whole pounds
         with frozen_now(BEFORE):
-            self.assertEqual(wallet.balance(self.customer), 7850)
-        self.complete(cash_collected=12150)
+            self.assertEqual(wallet.balance(self.customer), 7900)
+        self.complete(cash_collected=12200)
         inv = Invoice.objects.get()
-        self.assertEqual((inv.wallet_amount, inv.cash_amount), (12150, 12150))
+        self.assertEqual((inv.wallet_amount, inv.cash_amount), (12100, 12200))
+        self.order.refresh_from_db()
+        self.assertEqual((self.order.revenue, self.order.collected, self.order.uncollected), (24300, 12200, 0))
 
     def test_wallet_more_than_balance(self):
         with self.assertRaises(BusinessError) as e:
@@ -85,6 +88,8 @@ class PaymentFlowTests(TestCase):
         self.assertEqual(self.order.amount_to_collect, 0)
         self.complete()  # nothing to collect in cash
         self.assertEqual(Invoice.objects.get().instapay_amount, 24300)
+        self.order.refresh_from_db()
+        self.assertEqual((self.order.revenue, self.order.collected, self.order.uncollected), (24300, 24300, 0))
 
     def test_instapay_rejected_becomes_cash(self):
         self.confirm("instapay", proof_file=proof())

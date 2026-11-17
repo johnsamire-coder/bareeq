@@ -57,6 +57,7 @@ class PaymentsApiTests(TestCase):
         inv = self.as_(self.customer).get(f"/api/orders/{self.order.id}/invoice/").json()
         self.assertEqual(inv["number"], "BR-2026-000001")
         self.assertEqual((inv["wallet_amount"], inv["instapay_amount"], inv["cash_amount"]), (10000, 14300, 0))
+        self.assertEqual((inv["revenue"], inv["collected"]), (24300, 14300))  # difference = wallet
         self.assertEqual(len(self.c.get("/api/my-invoices/").json()), 1)
 
     def test_invoice_cancel_api(self):
@@ -94,7 +95,8 @@ class PaymentsApiTests(TestCase):
         r = self.c.post(f"/api/manage/daily-closings/{closings[0]['id']}/confirm/")
         self.assertEqual(r.json()["status"], "confirmed")
         money = self.c.get(f"/api/manage/orders/{self.order.id}/money/").json()
-        self.assertEqual((money["materials_cost"], money["margin"]), (2000, 22300))
+        self.assertEqual((money["materials_cost"], money["wash_margin"]), (2000, 22300))
+        self.assertEqual((money["revenue"], money["collected"], money["wallet_used"]), (24300, 24300, 0))
 
     def test_role_checks(self):
         self.assertEqual(self.as_(self.customer).get("/api/manage/payments/").status_code, 403)

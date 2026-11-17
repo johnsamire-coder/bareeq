@@ -80,9 +80,29 @@ class Order(models.Model):
         return max(0, self.amount_due - self.wallet_used - instapay)
 
     @property
-    def margin(self):
-        """Services income minus oil (sold at cost) minus materials used."""
+    def wash_margin(self):
+        """«هامش الغسلة»: services income minus oil (sold at cost) minus materials.
+        Technician pay and fuel are NOT included, so this is not profit."""
         return self.total - self.oil_total - self.materials_cost
+
+    @property
+    def revenue(self):
+        """«الإيراد»: everything the order is worth (services + oil + older fees)."""
+        return self.amount_due
+
+    @property
+    def collected(self):
+        """«اتحصّل فعلاً»: real money in: cash collected + confirmed InstaPay."""
+        from payments.models import Payment
+
+        return sum(p.amount for p in self.payments.filter(
+            status__in=[Payment.Status.COLLECTED, Payment.Status.CONFIRMED]))
+
+    @property
+    def uncollected(self):
+        """Revenue - collected - wallet. Zero when fully paid; above zero = still missing
+        (InstaPay waiting for review, or the technician collected less)."""
+        return self.revenue - self.collected - self.wallet_used
 
     @property
     def place(self):

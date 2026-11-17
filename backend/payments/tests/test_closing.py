@@ -34,13 +34,13 @@ class MaterialsAndClosingTests(TestCase):
             complete_job(order, self.tech, cash_collected=cash)
         return order
 
-    def test_material_cost_and_margin(self):
+    def test_material_cost_and_wash_margin(self):
         order = self.done_job(cairo(WED, 10), 24300)
         record_materials(order, self.tech, [{"material": self.shampoo.id, "quantity": "0.5"},
                                             {"material": self.cloth.id, "quantity": "2"}])
         order.refresh_from_db()
         self.assertEqual(order.materials_cost, 4000 + 3000)
-        self.assertEqual(order.margin, 24300 - 7000)
+        self.assertEqual(order.wash_margin, 24300 - 7000)
         # Price change later does not change past jobs.
         self.shampoo.unit_cost = 10000
         self.shampoo.save()
@@ -62,6 +62,8 @@ class MaterialsAndClosingTests(TestCase):
         self.done_job(cairo(WED, 13), 24000)  # customer paid 3 EGP less
         s = closing_summary(self.tech, WED)
         self.assertEqual(s["cash_collected"], 48300)
+        # Revenue next to collected: 300 piastres missing (no wallet used here).
+        self.assertEqual((s["revenue"], s["collected"], s["wallet_used"], s["uncollected"]), (48600, 48300, 0, 300))
         self.assertEqual(len(s["orders"]), 2)
         with frozen_now(cairo(WED, 22)):
             c = submit_closing(self.tech, WED, cash_handed=48000, note="")
