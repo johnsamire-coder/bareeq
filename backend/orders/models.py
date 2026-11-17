@@ -43,6 +43,7 @@ class Order(models.Model):
     total = models.PositiveIntegerField("الإجمالي (قرش)")
     charges_total = models.PositiveIntegerField("رسوم سابقة مضافة (قرش)", default=0)
     wallet_used = models.PositiveIntegerField("من المحفظة (قرش)", default=0)
+    coupon_discount = models.PositiveIntegerField("خصم الكوبون (قرش)", default=0)
     materials_cost = models.PositiveIntegerField("تكلفة الخامات (قرش)", default=0)
     actual_start = models.DateTimeField("بدأ فعلاً", null=True, blank=True)
     actual_end = models.DateTimeField("خلص فعلاً", null=True, blank=True)
@@ -66,12 +67,12 @@ class Order(models.Model):
         happens when an added fee has piastres; prices are already whole)."""
         from core.money import whole_pound_discount
 
-        return whole_pound_discount(self.total + self.charges_total, 0)
+        return whole_pound_discount(self.total - self.coupon_discount + self.charges_total, 0)
 
     @property
     def amount_due(self):
-        """Services total + older unpaid fees added to this order, in whole pounds."""
-        return self.total + self.charges_total - self.rounding
+        """Services total - coupon + older unpaid fees added to this order, in whole pounds."""
+        return self.total - self.coupon_discount + self.charges_total - self.rounding
 
     @property
     def oil_total(self):

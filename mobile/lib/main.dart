@@ -20,7 +20,9 @@ void main() {
     SemanticsBinding.instance.ensureSemantics();
   }
   final session = Session(Api())..restore();
-  runApp(ChangeNotifierProvider.value(value: session, child: const BareeqApp()));
+  runApp(
+    ChangeNotifierProvider.value(value: session, child: const BareeqApp()),
+  );
 }
 
 class BareeqApp extends StatelessWidget {
@@ -52,7 +54,9 @@ class RootGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<Session>();
-    if (s.loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (s.loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (!s.loggedIn) return const TermsScreen();
     if (s.needsTerms) return const TermsScreen(reaccept: true);
     if (s.role == 'customer') return const HomeScreen();

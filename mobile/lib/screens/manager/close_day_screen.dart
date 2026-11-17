@@ -34,12 +34,24 @@ class _CloseDayScreenState extends State<CloseDayScreen> {
   }
 
   Future<void> _close() async {
-    final zoneName = _zone == null ? 'كل المناطق' : _zones.firstWhere((z) => z['id'] == _zone)['name'];
-    final ok = await confirmDialog(context, 'تقفل يوم ${isoDay(_day)}؟',
-        '$zoneName. كل الحجوزات اللي مبدأتش هتتلغي ببلاش، والعملاء هيوصلهم إشعار يحجزوا تاني.', yes: 'اقفل');
+    final zoneName = _zone == null
+        ? 'كل المناطق'
+        : _zones.firstWhere((z) => z['id'] == _zone)['name'];
+    final ok = await confirmDialog(
+      context,
+      'تقفل يوم ${isoDay(_day)}؟',
+      '$zoneName. كل الحجوزات اللي مبدأتش هتتلغي ببلاش، والعملاء هيوصلهم إشعار يحجزوا تاني.',
+      yes: 'اقفل',
+    );
     if (!ok || !mounted) return;
-    final r = await context.read<Session>().api.post('manage/closed-days/', {'date': isoDay(_day), 'zone': _zone, 'reason': _reason.text.trim()});
-    if (mounted) showInfo(context, 'اليوم اتقفل. اتلغى ${r['cancelled_orders']} حجز.');
+    final r = await context.read<Session>().api.post('manage/closed-days/', {
+      'date': isoDay(_day),
+      'zone': _zone,
+      'reason': _reason.text.trim(),
+    });
+    if (mounted) {
+      showInfo(context, 'اليوم اتقفل. اتلغى ${r['cancelled_orders']} حجز.');
+    }
     _reason.clear();
     _load();
   }
@@ -48,53 +60,81 @@ class _CloseDayScreenState extends State<CloseDayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('قفل يوم (الجو)')),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.event),
-            title: Text(isoDay(_day)),
-            trailing: const Icon(Icons.edit_calendar_outlined),
-            onTap: () async {
-              final d = await showDatePicker(context: context, initialDate: _day, firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                  lastDate: DateTime.now().add(const Duration(days: 60)));
-              if (d != null) setState(() => _day = d);
-            },
-          ),
-        ),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<int?>(
-          initialValue: _zone,
-          decoration: const InputDecoration(labelText: 'المنطقة'),
-          items: [
-            const DropdownMenuItem<int?>(value: null, child: Text('كل المناطق')),
-            for (final z in _zones) DropdownMenuItem<int?>(value: z['id'] as int, child: Text('${z['name']}')),
-          ],
-          onChanged: (v) => setState(() => _zone = v),
-        ),
-        const SizedBox(height: 10),
-        TextField(controller: _reason, decoration: const InputDecoration(labelText: 'السبب (العميل هيشوفه)', hintText: 'مثلاً: مطر شديد'),
-            onChanged: (_) => setState(() {})),
-        const SizedBox(height: 14),
-        BusyButton(label: 'اقفل اليوم', icon: Icons.block, onPressed: _reason.text.trim().isEmpty ? null : _close),
-        const SectionTitle('أيام مقفولة'),
-        if (_closed.isEmpty) const Muted('مفيش.'),
-        for (final c in _closed)
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
           Card(
-            margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              title: Text('${c['date']} • ${c['zone_name']}'),
-              subtitle: Text('${c['reason']}'),
-              trailing: TextButton(
-                onPressed: () async {
-                  await context.read<Session>().api.delete('manage/closed-days/${c['id']}/');
-                  _load();
-                },
-                child: const Text('افتح تاني'),
-              ),
+              leading: const Icon(Icons.event),
+              title: Text(isoDay(_day)),
+              trailing: const Icon(Icons.edit_calendar_outlined),
+              onTap: () async {
+                final d = await showDatePicker(
+                  context: context,
+                  initialDate: _day,
+                  firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                  lastDate: DateTime.now().add(const Duration(days: 60)),
+                );
+                if (d != null) setState(() => _day = d);
+              },
             ),
           ),
-        const Muted('«افتح تاني» بيرجّع اليوم للحجز الجديد بس، والحجوزات اللي اتلغت مش بترجع.'),
-      ]),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<int?>(
+            initialValue: _zone,
+            decoration: const InputDecoration(labelText: 'المنطقة'),
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('كل المناطق'),
+              ),
+              for (final z in _zones)
+                DropdownMenuItem<int?>(
+                  value: z['id'] as int,
+                  child: Text('${z['name']}'),
+                ),
+            ],
+            onChanged: (v) => setState(() => _zone = v),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _reason,
+            decoration: const InputDecoration(
+              labelText: 'السبب (العميل هيشوفه)',
+              hintText: 'مثلاً: مطر شديد',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 14),
+          BusyButton(
+            label: 'اقفل اليوم',
+            icon: Icons.block,
+            onPressed: _reason.text.trim().isEmpty ? null : _close,
+          ),
+          const SectionTitle('أيام مقفولة'),
+          if (_closed.isEmpty) const Muted('مفيش.'),
+          for (final c in _closed)
+            Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text('${c['date']} • ${c['zone_name']}'),
+                subtitle: Text('${c['reason']}'),
+                trailing: TextButton(
+                  onPressed: () async {
+                    await context.read<Session>().api.delete(
+                      'manage/closed-days/${c['id']}/',
+                    );
+                    _load();
+                  },
+                  child: const Text('افتح تاني'),
+                ),
+              ),
+            ),
+          const Muted(
+            '«افتح تاني» بيرجّع اليوم للحجز الجديد بس، والحجوزات اللي اتلغت مش بترجع.',
+          ),
+        ],
+      ),
     );
   }
 }

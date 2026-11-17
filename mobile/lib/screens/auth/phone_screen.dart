@@ -18,36 +18,57 @@ class _PhoneScreenState extends State<PhoneScreen> {
 
   Future<void> _send() async {
     final api = context.read<Session>().api;
-    await api.post('auth/otp/request/', {'phone': _phone.text.trim(), 'device_id': 'app'});
+    await api.post('auth/otp/request/', {
+      'phone': _phone.text.trim(),
+      'device_id': 'app',
+    });
     if (!mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => CodeScreen(phone: _phone.text.trim(), termsVersion: widget.termsVersion),
-    ));
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CodeScreen(
+          phone: _phone.text.trim(),
+          termsVersion: widget.termsVersion,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('الدخول')),
-      body: ListView(padding: const EdgeInsets.all(20), children: [
-        Image.asset('assets/images/Bareeq-Symbol.png', height: 84),
-        const SizedBox(height: 16),
-        const Text('اكتب رقم موبايلك', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        const Muted('هنبعتلك كود من 6 أرقام. مفيش باسورد.', align: TextAlign.center),
-        const SizedBox(height: 24),
-        TextField(
-          controller: _phone,
-          keyboardType: TextInputType.phone,
-          textDirection: TextDirection.ltr,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20, letterSpacing: 1.5),
-          decoration: const InputDecoration(hintText: '01X XXXX XXXX'),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 16),
-        BusyButton(label: 'ابعت الكود', onPressed: _phone.text.trim().length >= 10 ? _send : null),
-      ]),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Image.asset('assets/images/Bareeq-Symbol.png', height: 84),
+          const SizedBox(height: 16),
+          const Text(
+            'اكتب رقم موبايلك',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          const Muted(
+            'هنبعتلك كود من 6 أرقام. مفيش باسورد.',
+            align: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _phone,
+            keyboardType: TextInputType.phone,
+            textDirection: TextDirection.ltr,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, letterSpacing: 1.5),
+            decoration: const InputDecoration(hintText: '01X XXXX XXXX'),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          BusyButton(
+            label: 'ابعت الكود',
+            onPressed: _phone.text.trim().length >= 10 ? _send : null,
+          ),
+        ],
+      ),
     );
   }
 }

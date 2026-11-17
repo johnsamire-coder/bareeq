@@ -10,7 +10,12 @@ import 'checkout_screen.dart';
 /// Booking step 3: day and time. Only times a technician can really make are shown.
 /// With rescheduleOrderId: moves an existing order instead of booking a new one.
 class SlotsScreen extends StatefulWidget {
-  const SlotsScreen({super.key, required this.addressId, required this.items, this.rescheduleOrderId});
+  const SlotsScreen({
+    super.key,
+    required this.addressId,
+    required this.items,
+    this.rescheduleOrderId,
+  });
   final int addressId;
   final List<Map<String, dynamic>> items;
   final int? rescheduleOrderId;
@@ -33,10 +38,15 @@ class _SlotsScreenState extends State<SlotsScreen> {
 
   Future<void> _load() async {
     try {
-      final d = await context.read<Session>().api.post('booking/slots/', {'address': widget.addressId, 'items': widget.items});
+      final d = await context.read<Session>().api.post('booking/slots/', {
+        'address': widget.addressId,
+        'items': widget.items,
+      });
       final data = Map<String, dynamic>.from(d);
       final days = data['days'] as List;
-      final firstWithSlots = days.indexWhere((x) => (x['slots'] as List).isNotEmpty);
+      final firstWithSlots = days.indexWhere(
+        (x) => (x['slots'] as List).isNotEmpty,
+      );
       setState(() {
         _data = data;
         _error = null;
@@ -51,34 +61,51 @@ class _SlotsScreenState extends State<SlotsScreen> {
   Future<void> _book() async {
     final api = context.read<Session>().api;
     if (widget.rescheduleOrderId != null) {
-      await api.post('orders/${widget.rescheduleOrderId}/reschedule/', {'start': _start});
+      await api.post('orders/${widget.rescheduleOrderId}/reschedule/', {
+        'start': _start,
+      });
       if (!mounted) return;
       showInfo(context, 'الميعاد اتغير.');
       Navigator.pop(context, true);
       return;
     }
-    final order = await api.post('orders/', {'address': widget.addressId, 'items': widget.items, 'start': _start});
+    final order = await api.post('orders/', {
+      'address': widget.addressId,
+      'items': widget.items,
+      'start': _start,
+    });
     if (!mounted) return;
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => CheckoutScreen(order: Map<String, dynamic>.from(order))));
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CheckoutScreen(order: Map<String, dynamic>.from(order)),
+      ),
+    );
     if (mounted) _load(); // if the hold expired, times may have changed
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.rescheduleOrderId != null ? 'ميعاد جديد' : 'الميعاد')),
+      appBar: AppBar(
+        title: Text(
+          widget.rescheduleOrderId != null ? 'ميعاد جديد' : 'الميعاد',
+        ),
+      ),
       body: _error != null
           ? ErrorRetry(error: _error!, onRetry: _load)
           : _data == null
-              ? const Loading()
-              : _body(),
+          ? const Loading()
+          : _body(),
       bottomNavigationBar: _data == null
           ? null
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: BusyButton(
-                  label: widget.rescheduleOrderId != null ? 'غيّر الميعاد' : 'احجز الميعاد',
+                  label: widget.rescheduleOrderId != null
+                      ? 'غيّر الميعاد'
+                      : 'احجز الميعاد',
                   onPressed: _start == null ? null : _book,
                 ),
               ),
@@ -90,65 +117,109 @@ class _SlotsScreenState extends State<SlotsScreen> {
     final days = _data!['days'] as List;
     final slots = (days[_day]['slots'] as List);
     final charges = _data!['charges'] as List;
-    return ListView(padding: const EdgeInsets.all(16), children: [
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(children: [
-            KeyValue('المدة', duration(_data!['total_minutes'] as int)),
-            KeyValue('السعر', money(_data!['total'])),
-            for (final c in charges) KeyValue('${c['label']} (طلب سابق)', money(c['amount']), color: BrandColors.danger),
-            if (charges.isNotEmpty) KeyValue('المطلوب', money(_data!['amount_due']), bold: true),
-          ]),
-        ),
-      ),
-      if (charges.isNotEmpty)
-        const Padding(padding: EdgeInsets.only(top: 6), child: Muted('عليك رسوم من طلب قبل كده، وهتتضاف على الطلب ده في سطر لوحدها.')),
-      const SectionTitle('اليوم'),
-      SizedBox(
-        height: 74,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: days.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (_, i) {
-            final d = DateTime.parse('${days[i]['date']}');
-            final has = (days[i]['slots'] as List).isNotEmpty;
-            final on = i == _day;
-            return InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => setState(() => (_day = i, _start = null)),
-              child: Container(
-                width: 72,
-                decoration: BoxDecoration(
-                  color: on ? BrandColors.layl : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: on ? BrandColors.layl : BrandColors.line),
-                ),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(dayLabel(d), style: TextStyle(fontSize: 12, color: on ? Colors.white : BrandColors.muted)),
-                  Text('${d.day}/${d.month}', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800,
-                      color: on ? Colors.white : (has ? BrandColors.layl : BrandColors.line))),
-                ]),
-              ),
-            );
-          },
-        ),
-      ),
-      const SectionTitle('الساعة'),
-      if (slots.isEmpty)
-        const EmptyState(icon: Icons.event_busy_outlined, text: 'مفيش مواعيد فاضية اليوم ده. جرب يوم تاني.')
-      else
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final s in slots)
-            ChoiceChip(
-              label: Text(clock(parseServerTime('${s['start']}'))),
-              selected: _start == s['start'],
-              onSelected: (_) => setState(() => _start = '${s['start']}'),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              children: [
+                KeyValue('المدة', duration(_data!['total_minutes'] as int)),
+                KeyValue('السعر', money(_data!['total'])),
+                for (final c in charges)
+                  KeyValue(
+                    '${c['label']} (طلب سابق)',
+                    money(c['amount']),
+                    color: BrandColors.danger,
+                  ),
+                if (charges.isNotEmpty)
+                  KeyValue('المطلوب', money(_data!['amount_due']), bold: true),
+              ],
             ),
-        ]),
-      const SizedBox(height: 8),
-      Muted('الشغل هياخد حوالي ${duration(_data!['total_minutes'] as int)}، فالمواعيد اللي مش هتلحق مش ظاهرة.'),
-    ]);
+          ),
+        ),
+        if (charges.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Muted(
+              'عليك رسوم من طلب قبل كده، وهتتضاف على الطلب ده في سطر لوحدها.',
+            ),
+          ),
+        const SectionTitle('اليوم'),
+        SizedBox(
+          height: 74,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: days.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              final d = DateTime.parse('${days[i]['date']}');
+              final has = (days[i]['slots'] as List).isNotEmpty;
+              final on = i == _day;
+              return InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => setState(() => (_day = i, _start = null)),
+                child: Container(
+                  width: 72,
+                  decoration: BoxDecoration(
+                    color: on ? BrandColors.layl : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: on ? BrandColors.layl : BrandColors.line,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayLabel(d),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: on ? Colors.white : BrandColors.muted,
+                        ),
+                      ),
+                      Text(
+                        '${d.day}/${d.month}',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: on
+                              ? Colors.white
+                              : (has ? BrandColors.layl : BrandColors.line),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SectionTitle('الساعة'),
+        if (slots.isEmpty)
+          const EmptyState(
+            icon: Icons.event_busy_outlined,
+            text: 'مفيش مواعيد فاضية اليوم ده. جرب يوم تاني.',
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final s in slots)
+                ChoiceChip(
+                  label: Text(clock(parseServerTime('${s['start']}'))),
+                  selected: _start == s['start'],
+                  onSelected: (_) => setState(() => _start = '${s['start']}'),
+                ),
+            ],
+          ),
+        const SizedBox(height: 8),
+        Muted(
+          'الشغل هياخد حوالي ${duration(_data!['total_minutes'] as int)}، فالمواعيد اللي مش هتلحق مش ظاهرة.',
+        ),
+      ],
+    );
   }
 }

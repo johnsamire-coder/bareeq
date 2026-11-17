@@ -15,8 +15,12 @@ class StaffPlaceholder extends StatelessWidget {
       appBar: AppBar(title: const Text('بريق')),
       body: EmptyState(
         icon: Icons.construction_rounded,
-        text: 'أهلاً ${s.user?['full_name'] ?? ''}.\nشاشات الفني والمدير جاية قريب.',
-        action: OutlinedButton(onPressed: s.logout, child: const Text('تسجيل خروج')),
+        text:
+            'أهلاً ${s.user?['full_name'] ?? ''}.\nشاشات الفني والمدير جاية قريب.',
+        action: OutlinedButton(
+          onPressed: s.logout,
+          child: const Text('تسجيل خروج'),
+        ),
       ),
     );
   }

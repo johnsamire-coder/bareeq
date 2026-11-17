@@ -29,6 +29,9 @@ def confirm_with_payment(order, method, wallet_amount=0, proof_file=None):
         order.save(update_fields=["status", "updated_at"])
         raise BusinessError("hold_expired", "خلص وقت الحجز المؤقت. اختار الميعاد تاني.")
 
+    from coupons.service import recheck_on_confirm
+
+    recheck_on_confirm(order)
     wallet_amount = int(wallet_amount or 0)
     if wallet_amount < 0:
         raise BusinessError("bad_amount", "المبلغ مش صحيح.")

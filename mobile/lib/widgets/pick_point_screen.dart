@@ -22,22 +22,45 @@ class _PickPointScreenState extends State<PickPointScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
-      body: Stack(children: [
-        FlutterMap(
-          options: MapOptions(initialCenter: _center, initialZoom: 14, onPositionChanged: (c, _) => _center = c.center),
-          children: [
-            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'eg.bareeq.app'),
-            const SimpleAttributionWidget(source: Text('OpenStreetMap')),
-          ],
-        ),
-        const IgnorePointer(
-          child: Center(child: Padding(padding: EdgeInsets.only(bottom: 36), child: Icon(Icons.location_on_rounded, size: 46, color: BrandColors.layl))),
-        ),
-        Positioned(
-          left: 16, right: 16, bottom: 24,
-          child: FilledButton(onPressed: () => Navigator.pop(context, _center), child: const Text('اختار المكان ده')),
-        ),
-      ]),
+      body: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: _center,
+              initialZoom: 14,
+              onPositionChanged: (c, _) => _center = c.center,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'eg.bareeq.app',
+              ),
+              const SimpleAttributionWidget(source: Text('OpenStreetMap')),
+            ],
+          ),
+          const IgnorePointer(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 36),
+                child: Icon(
+                  Icons.location_on_rounded,
+                  size: 46,
+                  color: BrandColors.layl,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context, _center),
+              child: const Text('اختار المكان ده'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

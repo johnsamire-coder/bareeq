@@ -32,7 +32,10 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
   }
 
   Future<void> _add() async {
-    final a = await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddAddressScreen()));
+    final a = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddAddressScreen()),
+    );
     if (a != null) _load();
   }
 
@@ -51,29 +54,42 @@ class _MyAddressesScreenState extends State<MyAddressesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('عناويني')),
-      floatingActionButton: FloatingActionButton.extended(onPressed: _add, icon: const Icon(Icons.add_location_alt_outlined), label: const Text('ضيف عنوان')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _add,
+        icon: const Icon(Icons.add_location_alt_outlined),
+        label: const Text('ضيف عنوان'),
+      ),
       body: _error != null
           ? ErrorRetry(error: _error!, onRetry: _load)
           : _items == null
-              ? const Loading()
-              : _items!.isEmpty
-                  ? const EmptyState(icon: Icons.location_off_outlined, text: 'لسه مضفتش عناوين.')
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _items!.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) {
-                        final a = _items![i];
-                        return Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.location_on_outlined, size: 30),
-                            title: Text('${a['label']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                            subtitle: Text(addressLine(a)),
-                            trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _remove(a)),
-                          ),
-                        );
-                      },
+          ? const Loading()
+          : _items!.isEmpty
+          ? const EmptyState(
+              icon: Icons.location_off_outlined,
+              text: 'لسه مضفتش عناوين.',
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: _items!.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (_, i) {
+                final a = _items![i];
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.location_on_outlined, size: 30),
+                    title: Text(
+                      '${a['label']}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
+                    subtitle: Text(addressLine(a)),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => _remove(a),
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

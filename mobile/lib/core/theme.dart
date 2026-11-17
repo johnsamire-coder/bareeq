@@ -23,16 +23,28 @@ ThemeData buildTheme() {
     onSurface: BrandColors.layl,
     error: BrandColors.danger,
   );
-  final base = ThemeData(useMaterial3: true, colorScheme: scheme, fontFamily: 'Cairo');
+  final base = ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    fontFamily: 'Cairo',
+  );
   return base.copyWith(
     scaffoldBackgroundColor: BrandColors.sahab,
-    textTheme: base.textTheme.apply(bodyColor: BrandColors.layl, displayColor: BrandColors.layl),
+    textTheme: base.textTheme.apply(
+      bodyColor: BrandColors.layl,
+      displayColor: BrandColors.layl,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: BrandColors.sahab,
       foregroundColor: BrandColors.layl,
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: TextStyle(fontFamily: 'Cairo', fontSize: 18, fontWeight: FontWeight.w700, color: BrandColors.layl),
+      titleTextStyle: TextStyle(
+        fontFamily: 'Cairo',
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: BrandColors.layl,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -40,7 +52,11 @@ ThemeData buildTheme() {
         foregroundColor: Colors.white,
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        textStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -49,21 +65,37 @@ ThemeData buildTheme() {
         minimumSize: const Size.fromHeight(48),
         side: const BorderSide(color: BrandColors.line),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        textStyle: const TextStyle(fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: BrandColors.line)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: BrandColors.line)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: BrandColors.mayya, width: 2)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: BrandColors.line),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: BrandColors.line),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: BrandColors.mayya, width: 2),
+      ),
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: BrandColors.line)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: BrandColors.line),
+      ),
     ),
     navigationBarTheme: const NavigationBarThemeData(
       backgroundColor: Colors.white,

@@ -1,7 +1,9 @@
 /// Money is integer piastres everywhere; shown in whole pounds.
 String money(num piastres) {
   final pounds = piastres / 100;
-  final text = pounds == pounds.roundToDouble() ? pounds.toInt().toString() : pounds.toStringAsFixed(2);
+  final text = pounds == pounds.roundToDouble()
+      ? pounds.toInt().toString()
+      : pounds.toStringAsFixed(2);
   return '$text ج.م';
 }
 
@@ -40,13 +42,16 @@ String dayLabel(DateTime d, {DateTime? today}) {
   return dayName(d);
 }
 
-String fullWhen(DateTime d) => '${dayLabel(d)} ${shortDate(d)} الساعة ${clock(d)}';
+String fullWhen(DateTime d) =>
+    '${dayLabel(d)} ${shortDate(d)} الساعة ${clock(d)}';
 
 /// 45 → "45 دقيقة", 105 → "ساعة و 45 دقيقة" (space after و so the number is not
 /// glued to an Arabic letter, which scrambles the order on screen).
 String duration(int minutes) {
   final h = minutes ~/ 60, m = minutes % 60;
-  final hours = h == 0 ? '' : (h == 1 ? 'ساعة' : (h == 2 ? 'ساعتين' : '$h ساعات'));
+  final hours = h == 0
+      ? ''
+      : (h == 1 ? 'ساعة' : (h == 2 ? 'ساعتين' : '$h ساعات'));
   if (m == 0) return hours;
   if (h == 0) return '$m دقيقة';
   return '$hours و $m دقيقة';

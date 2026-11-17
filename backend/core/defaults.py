@@ -124,8 +124,8 @@ DEFAULT_SETTINGS = [
     {
         "key": "cancellation-late-fee",
         "group": "cancellation",
-        "label": "رسوم الإلغاء أو التأجيل المتأخر (بالقرش)",
-        "description": "5000 قرش = 50 جنيه.",
+        "label": "رسوم الإلغاء أو التأجيل المتأخر",
+        "description": "",
         "value_type": "money",
         "value": 5000,
         "mentioned_in_terms": True,
@@ -133,8 +133,8 @@ DEFAULT_SETTINGS = [
     {
         "key": "car-not-found-fee",
         "group": "cancellation",
-        "label": "رسوم «الفني وصل وملقاش العربية» (بالقرش)",
-        "description": "5000 قرش = 50 جنيه.",
+        "label": "رسوم «الفني وصل وملقاش العربية»",
+        "description": "",
         "value_type": "money",
         "value": 5000,
         "mentioned_in_terms": True,

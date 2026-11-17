@@ -52,8 +52,15 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   Future<void> _locate() async {
     setState(() => _checking = true);
     try {
-      final r = await context.read<Session>().api.get('zones-locate/', {'lat': _coord(_center.latitude), 'lng': _coord(_center.longitude)});
-      setState(() => _zone = r['zone'] == null ? null : Map<String, dynamic>.from(r['zone']));
+      final r = await context.read<Session>().api.get('zones-locate/', {
+        'lat': _coord(_center.latitude),
+        'lng': _coord(_center.longitude),
+      });
+      setState(
+        () => _zone = r['zone'] == null
+            ? null
+            : Map<String, dynamic>.from(r['zone']),
+      );
     } catch (_) {
       setState(() => _zone = null);
     } finally {
@@ -69,7 +76,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
   Future<void> _notifyMe() async {
     await context.read<Session>().api.post('area-requests/', {
-      'lat': _coord(_center.latitude), 'lng': _coord(_center.longitude), 'area_name': _street.text.trim(),
+      'lat': _coord(_center.latitude),
+      'lng': _coord(_center.longitude),
+      'area_name': _street.text.trim(),
     });
     if (!mounted) return;
     showInfo(context, 'تمام، هنبلغك أول ما نوصل منطقتك.');
@@ -104,90 +113,185 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     final outside = !_checking && _zone == null;
     return Scaffold(
       appBar: AppBar(title: const Text('عنوان جديد')),
-      body: ListView(children: [
-        SizedBox(
-          height: 300,
-          child: Stack(children: [
-            FlutterMap(
-              mapController: _map,
-              options: MapOptions(
-                initialCenter: _start,
-                initialZoom: 15,
-                onPositionChanged: (camera, hasGesture) => _moved(camera),
-              ),
+      body: ListView(
+        children: [
+          SizedBox(
+            height: 300,
+            child: Stack(
               children: [
-                TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'eg.bareeq.app'),
-                const SimpleAttributionWidget(source: Text('OpenStreetMap')),
-              ],
-            ),
-            const IgnorePointer(
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 36),
-                  child: Icon(Icons.location_on_rounded, size: 46, color: BrandColors.layl),
+                FlutterMap(
+                  mapController: _map,
+                  options: MapOptions(
+                    initialCenter: _start,
+                    initialZoom: 15,
+                    onPositionChanged: (camera, hasGesture) => _moved(camera),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'eg.bareeq.app',
+                    ),
+                    const SimpleAttributionWidget(
+                      source: Text('OpenStreetMap'),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            Positioned(
-              left: 12, right: 12, bottom: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: BrandColors.line)),
-                child: Text(
-                  _checking
-                      ? 'بنشوف المكان...'
-                      : outside
+                const IgnorePointer(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 36),
+                      child: Icon(
+                        Icons.location_on_rounded,
+                        size: 46,
+                        color: BrandColors.layl,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: BrandColors.line),
+                    ),
+                    child: Text(
+                      _checking
+                          ? 'بنشوف المكان...'
+                          : outside
                           ? 'لسه مش بنخدم المكان ده'
                           : 'المنطقة: ${_zone!['name']}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.w700, color: outside ? BrandColors.danger : BrandColors.good),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: outside ? BrandColors.danger : BrandColors.good,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ]),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: outside
-              ? Column(children: [
-                  const Text('حرّك الخريطة وحط الدبوس على مكان العربية بالظبط.', textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  const Muted('لو مكانك برا مدينة نصر والعبور ومدينتي، نقدر نبلغك أول ما نوصل.', align: TextAlign.center),
-                  const SizedBox(height: 12),
-                  TextField(controller: _street, decoration: const InputDecoration(labelText: 'اسم منطقتك (اختياري)')),
-                  const SizedBox(height: 12),
-                  BusyButton(label: 'بلغوني لما توصلوا', icon: Icons.notifications_active_outlined, onPressed: _notifyMe),
-                ])
-              : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Muted('حرّك الخريطة لحد ما الدبوس يبقى على مكان العربية بالظبط.'),
-                  const SectionTitle('اسم العنوان'),
-                  Wrap(spacing: 8, children: [
-                    for (final l in const ['البيت', 'الشغل', 'تاني'])
-                      ChoiceChip(label: Text(l), selected: _label == l, onSelected: (_) => setState(() => _label = l)),
-                  ]),
-                  if (_label == 'تاني') ...[
-                    const SizedBox(height: 8),
-                    TextField(controller: _customLabel, decoration: const InputDecoration(labelText: 'اسم العنوان')),
-                  ],
-                  const SizedBox(height: 12),
-                  TextField(controller: _building, decoration: const InputDecoration(labelText: 'رقم العمارة / الفيلا'),
-                      onChanged: (_) => setState(() {})),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    Expanded(child: TextField(controller: _floor, decoration: const InputDecoration(labelText: 'الدور'))),
-                    const SizedBox(width: 10),
-                    Expanded(child: TextField(controller: _apartment, decoration: const InputDecoration(labelText: 'الشقة'))),
-                  ]),
-                  const SizedBox(height: 10),
-                  TextField(controller: _street, decoration: const InputDecoration(labelText: 'الشارع (اختياري)')),
-                  const SizedBox(height: 10),
-                  TextField(controller: _landmark, decoration: const InputDecoration(labelText: 'علامة مميزة (اختياري)')),
-                  const SizedBox(height: 18),
-                  BusyButton(label: 'احفظ العنوان', onPressed: (_building.text.trim().isEmpty || _checking) ? null : _save),
-                ]),
-        ),
-      ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: outside
+                ? Column(
+                    children: [
+                      const Text(
+                        'حرّك الخريطة وحط الدبوس على مكان العربية بالظبط.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Muted(
+                        'لو مكانك برا مدينة نصر والعبور ومدينتي، نقدر نبلغك أول ما نوصل.',
+                        align: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _street,
+                        decoration: const InputDecoration(
+                          labelText: 'اسم منطقتك (اختياري)',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      BusyButton(
+                        label: 'بلغوني لما توصلوا',
+                        icon: Icons.notifications_active_outlined,
+                        onPressed: _notifyMe,
+                      ),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Muted(
+                        'حرّك الخريطة لحد ما الدبوس يبقى على مكان العربية بالظبط.',
+                      ),
+                      const SectionTitle('اسم العنوان'),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final l in const ['البيت', 'الشغل', 'تاني'])
+                            ChoiceChip(
+                              label: Text(l),
+                              selected: _label == l,
+                              onSelected: (_) => setState(() => _label = l),
+                            ),
+                        ],
+                      ),
+                      if (_label == 'تاني') ...[
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _customLabel,
+                          decoration: const InputDecoration(
+                            labelText: 'اسم العنوان',
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _building,
+                        decoration: const InputDecoration(
+                          labelText: 'رقم العمارة / الفيلا',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _floor,
+                              decoration: const InputDecoration(
+                                labelText: 'الدور',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _apartment,
+                              decoration: const InputDecoration(
+                                labelText: 'الشقة',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _street,
+                        decoration: const InputDecoration(
+                          labelText: 'الشارع (اختياري)',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _landmark,
+                        decoration: const InputDecoration(
+                          labelText: 'علامة مميزة (اختياري)',
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      BusyButton(
+                        label: 'احفظ العنوان',
+                        onPressed: (_building.text.trim().isEmpty || _checking)
+                            ? null
+                            : _save,
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

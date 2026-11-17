@@ -1,4 +1,6 @@
 from rest_framework import generics, mixins, viewsets
+
+from core.errors import BusinessError
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -118,3 +120,39 @@ def terms_status(request):
             "changed_settings": [{"key": s.key, "label": s.label, "value": s.value} for s in changed],
         }
     )
+
+
+class ManagerHeardAboutViewSet(viewsets.ModelViewSet):
+    """'How did you hear about us' list. No delete: hide with is_active=false."""
+
+    permission_classes = [IsManager]
+    queryset = HeardAboutOption.objects.all()
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+    def get_serializer_class(self):
+        from rest_framework import serializers
+
+        class S(serializers.ModelSerializer):
+            class Meta:
+                model = HeardAboutOption
+                fields = ["id", "label", "sort_order", "is_active"]
+
+        return S
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsManager])
+def manager_terms(request):
+    """GET: all versions (newest first). POST {text}: publish a new version.
+    Customers must accept it before they continue (asked in the app)."""
+    if request.method == "POST":
+        text = (request.data.get("text") or "").strip()
+        if len(text) < 50:
+            raise BusinessError("text_too_short", "نص الشروط قصير قوي.")
+        current = TermsVersion.current()
+        if current and current.text.strip() == text:
+            raise BusinessError("no_change", "النص زي النسخة الحالية بالظبط.")
+        TermsVersion.objects.create(text=text, created_by=request.user)
+    rows = [{"version": t.version, "text": t.text, "created_at": t.created_at,
+             "accepted_by": t.acceptances.count()} for t in TermsVersion.objects.all()]
+    return Response(rows, status=201 if request.method == "POST" else 200)
