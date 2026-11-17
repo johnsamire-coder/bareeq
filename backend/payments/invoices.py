@@ -49,7 +49,8 @@ def issue_invoice(order):
     oil = sum((i.quote.get("oil") or {}).get("price", 0) for i in items)
     return Invoice.objects.create(
         order=order, number=f"BR-{year}-{seq:06d}", year=year, sequence=seq, issued_at=now, lines=lines,
-        subtotal=order.subtotal - oil, discount=order.discount, oil_total=oil, charges_total=order.charges_total,
+        subtotal=order.subtotal - oil, discount=order.discount + order.rounding, oil_total=oil,
+        charges_total=order.charges_total,
         total=order.amount_due, wallet_amount=order.wallet_used,
         instapay_amount=_paid(order, Payment.Method.INSTAPAY, [Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]),
         cash_amount=_paid(order, Payment.Method.CASH, [Payment.Status.COLLECTED]),

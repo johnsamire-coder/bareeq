@@ -116,3 +116,37 @@ class PaymentFlowTests(TestCase):
     def test_unknown_method(self):
         with self.assertRaises(BusinessError):
             self.confirm("visa")
+
+
+@override_settings(MEDIA_ROOT=MEDIA)
+class WholePoundsRuleTests(TestCase):
+    """Everything the customer pays is whole pounds, even with a fee that has piastres."""
+
+    def test_fee_with_piastres_wallet_and_cash(self):
+        from core.models import Setting
+        from orders.lifecycle import cancel_by_customer
+
+        tech = make_technician("01100000001")
+        manager = User.objects.create_user("01000000001", "Boss", role="manager")
+        customer, car, address = make_customer()
+        Setting.objects.filter(key="cancellation-late-fee").update(value=5025)  # 50.25 EGP
+        first = book(customer, car, address, START)
+        with frozen_now(BEFORE):
+            confirm_with_payment(first, "cash")
+        with frozen_now(START - timedelta(hours=1)):
+            cancel_by_customer(first)  # late: 50.25 fee
+        with frozen_now(BEFORE - timedelta(days=1)):
+            wallet.credit(customer, 9999, "manual", created_by=manager, note="x")
+        second = book(customer, car, address, cairo(WED, 16))  # 243 + 50.25 fee
+        with frozen_now(cairo(WED, 16) - timedelta(days=1)):
+            o = confirm_with_payment(second, "cash", wallet_amount=9999)
+        self.assertEqual((o.total, o.charges_total, o.rounding, o.amount_due), (24300, 5025, 25, 29300))
+        self.assertEqual(o.wallet_used, 9900)
+        for amount in (o.amount_due, o.wallet_used, o.amount_to_collect):
+            self.assertEqual(amount % 100, 0, amount)
+        end = work_until_done_photos(o, tech, cairo(WED, 16))
+        with frozen_now(end):
+            complete_job(o, tech, cash_collected=o.amount_to_collect)
+        inv = Invoice.objects.get()
+        self.assertEqual((inv.total, inv.discount, inv.charges_total), (29300, 2700 + 25, 5025))
+        self.assertEqual(inv.total % 100, 0)

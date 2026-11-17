@@ -67,7 +67,8 @@ class QuoteTests(TestCase):
     def test_vip_bundle_beats_basic(self):
         r = self.q(["exterior-wash", "interior-wash", "engine-wash", "headlight-restoration"])
         self.assertEqual(r["bundle"]["name"], "باقة VIP")
-        self.assertEqual((r["subtotal"], r["discount"], r["total"]), (67000, 10050, 56950))
+        # 15% of 670 = 100.50 -> discount rounded DOWN to 100 -> pays 570 (whole pounds).
+        self.assertEqual((r["subtotal"], r["discount"], r["total"]), (67000, 10000, 57000))
 
     def test_bundle_discount_only_on_bundle_services(self):
         r = self.q(["exterior-wash", "interior-wash", "polish-protection"])
@@ -124,6 +125,37 @@ class QuoteTests(TestCase):
         with self.assertRaises(BusinessError) as e:
             self.q(["exterior-wash"], zone=new_zone)
         self.assertEqual(e.exception.detail["code"], "not_available")
+
+    def test_price_with_piastres_and_no_discount(self):
+        ServicePrice.objects.filter(zone=self.nasr, service__code="exterior-wash", size_class="sedan").update(price=16250)
+        r = self.q(["exterior-wash"])
+        self.assertEqual((r["subtotal"], r["discount"], r["total"]), (16250, 50, 16200))
+
+    def test_every_combination_is_whole_pounds(self):
+        """All 255 service combinations x 3 zones x 4 sizes, with odd prices and an oil
+        type that has piastres: the total is always whole pounds and never negative."""
+        from itertools import combinations
+        import random
+
+        rnd = random.Random(3)
+        for p in ServicePrice.objects.all():
+            p.price = rnd.randint(5000, 200000)  # many with piastres
+            p.save()
+        oil = OilType.objects.create(name="زيت", price=87550)
+        codes = list(Service.objects.values_list("code", flat=True))
+        checked = 0
+        for zone in Zone.objects.filter(name__in=["مدينة نصر", "العبور", "مدينتي"]):
+            for size in ("hatchback", "sedan", "suv", "luxury"):
+                for n in range(1, len(codes) + 1):
+                    for combo in combinations(codes, n):
+                        kw = {"oil_type_id": oil.id} if "oil-change" in combo else {}
+                        r = build_quote(ids(*combo), zone, size, **kw)
+                        self.assertEqual(r["total"] % 100, 0, (combo, r))
+                        self.assertGreaterEqual(r["discount"], 0)
+                        self.assertEqual(r["subtotal"] + (r["oil"]["price"] if r["oil"] else 0) - r["discount"],
+                                         r["total"])
+                        checked += 1
+        self.assertEqual(checked, 3 * 4 * 255)
 
     def test_duplicates_ignored(self):
         self.assertEqual(build_quote(ids("exterior-wash") * 2, self.nasr, "sedan")["total"], 15000)

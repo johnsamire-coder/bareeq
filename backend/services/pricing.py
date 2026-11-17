@@ -8,8 +8,10 @@ All money is integer piastres. Rules (all editable by the manager):
 3. Bundles: if every service of a bundle is selected, its % discount applies
    to those services. Only the single best bundle applies.
 4. Oil (for oil change) is a separate line, never discounted.
+5. The total is always whole pounds: the piastres go into the discount.
 """
 from core.errors import BusinessError
+from core.money import whole_pound_discount
 from core.services import get_setting
 
 from .models import Bundle, OilType, Service, ServiceDuration, ServicePrice
@@ -87,6 +89,11 @@ def build_quote(service_ids, zone, size_class, parking=None, oil_type_id=None):
             raise BusinessError("unknown_oil", "نوع الزيت ده مش متاح.")
         oil = {"id": o.id, "name": o.name, "price": o.price}
 
+    # 5. Whole pounds: the piastres go into the discount (core/money.py).
+    oil_price = oil["price"] if oil else 0
+    gross = subtotal + oil_price
+    discount = whole_pound_discount(gross, discount)
+
     return {
         "lines": lines,
         "removed_services": removed,
@@ -97,7 +104,7 @@ def build_quote(service_ids, zone, size_class, parking=None, oil_type_id=None):
         "discount": discount,
         "oil": oil,
         "needs_oil_choice": has_oil_service and oil is None,
-        "total": subtotal - discount + (oil["price"] if oil else 0),
+        "total": gross - discount,
         "total_minutes": sum(line["minutes"] for line in lines),
         "has_provisional_prices": any(prices[s.id].is_provisional for s in ordered),
     }

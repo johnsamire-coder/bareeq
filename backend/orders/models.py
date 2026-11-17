@@ -61,9 +61,17 @@ class Order(models.Model):
         return f"طلب {self.id} - {self.customer}"
 
     @property
+    def rounding(self):
+        """Piastres taken off so the customer always pays whole pounds (only
+        happens when an added fee has piastres; prices are already whole)."""
+        from core.money import whole_pound_discount
+
+        return whole_pound_discount(self.total + self.charges_total, 0)
+
+    @property
     def amount_due(self):
-        """Services total + older unpaid fees added to this order."""
-        return self.total + self.charges_total
+        """Services total + older unpaid fees added to this order, in whole pounds."""
+        return self.total + self.charges_total - self.rounding
 
     @property
     def oil_total(self):
