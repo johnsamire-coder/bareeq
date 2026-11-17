@@ -167,4 +167,6 @@ cd D:\bareeq\mobile
 flutter test
 ```
 
+> لو سحبت شغل جديد من GitHub فيه مكتبة جديدة، وظهر خطأ زي `MissingPluginException`: شغّل `flutter clean` وبعدين `flutter pub get` وجرب تاني.
+
 > **الخريطة:** شاشة العنوان بتستخدم OpenStreetMap **مؤقتاً للتجربة بس**، ولازم تتبدل بخريطة جوجل قبل الإطلاق.

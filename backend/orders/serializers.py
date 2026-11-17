@@ -31,10 +31,13 @@ class ReassignSerializer(serializers.Serializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     car_name = serializers.CharField(source="car.display_name", read_only=True)
+    car_color = serializers.CharField(source="car.color.name", read_only=True)
+    car_plate = serializers.CharField(source="car.plate_number", read_only=True)
+    car_parking = serializers.CharField(source="car.get_parking_display", read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ["car", "car_name", "size_class", "minutes", "total", "quote"]
+        fields = ["car", "car_name", "car_color", "car_plate", "car_parking", "size_class", "minutes", "total", "quote"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -57,11 +60,27 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ManagerOrderSerializer(OrderSerializer):
+    """For the technician and the manager: who, where exactly, and the address details."""
+
     customer_name = serializers.CharField(source="customer.full_name", read_only=True)
     customer_phone = serializers.CharField(source="customer.phone", read_only=True)
+    address_details = serializers.SerializerMethodField()
+    photo_counts = serializers.SerializerMethodField()
+
+    def get_address_details(self, obj):
+        a = obj.address
+        return {"label": a.label, "street": a.street, "building": a.building, "floor": a.floor,
+                "apartment": a.apartment, "landmark": a.landmark}
+
+    def get_photo_counts(self, obj):
+        sides = {}
+        for stage, side in obj.photos.values_list("stage", "side"):
+            sides.setdefault(stage, set()).add(side)
+        return {"before": sorted(sides.get("before", [])), "after": sorted(sides.get("after", []))}
 
     class Meta(OrderSerializer.Meta):
-        fields = OrderSerializer.Meta.fields + ["customer", "customer_name", "customer_phone", "lat", "lng"]
+        fields = OrderSerializer.Meta.fields + ["customer", "customer_name", "customer_phone", "lat", "lng",
+                                                "address_details", "photo_counts", "called_customer_at"]
 
 
 class PointSerializer(serializers.Serializer):

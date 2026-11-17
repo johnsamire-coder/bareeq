@@ -36,6 +36,9 @@ class TechnicianApiTests(TestCase):
             jobs = self.client.get("/api/technician/jobs/").json()
         self.assertEqual([j["id"] for j in jobs], [self.order.id])
         self.assertEqual(jobs[0]["customer_phone"], "+201012345678")
+        self.assertEqual(jobs[0]["address_details"]["building"], "1")
+        self.assertEqual(jobs[0]["items"][0]["car_color"], self.car.color.name)
+        self.assertEqual(jobs[0]["photo_counts"], {"before": [], "after": []})
         with frozen_now(cairo(WED, 13, 40)):
             self.assertEqual(self.client.post(f"{self.base}/on-the-way/").json()["status"], "on_the_way")
         with frozen_now(cairo(WED, 14)):

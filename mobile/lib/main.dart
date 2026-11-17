@@ -9,6 +9,7 @@ import 'core/theme.dart';
 import 'screens/auth/terms_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/staff_placeholder.dart';
+import 'screens/tech/tech_home.dart';
 
 void main() {
   // For automated screen tests in a browser only (flutter build web --dart-define=SEMANTICS=true):
@@ -54,6 +55,7 @@ class RootGate extends StatelessWidget {
     if (!s.loggedIn) return const TermsScreen();
     if (s.needsTerms) return const TermsScreen(reaccept: true);
     if (s.role == 'customer') return const HomeScreen();
-    return const StaffPlaceholder(); // technician and manager screens: step 12
+    if (s.role == 'technician') return const TechHome();
+    return const StaffPlaceholder(); // manager screens: steps 13-16
   }
 }
