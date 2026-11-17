@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/common.dart';
 import 'cars_catalog_screen.dart';
 import 'close_day_screen.dart';
+import 'custody_screen.dart';
 import 'customers_screen.dart';
 import 'reports_screen.dart';
 import 'lists.dart';
@@ -48,6 +49,12 @@ class AdminMenu extends StatelessWidget {
           'العملاء',
           'ملف كل عميل، المحفظة، الرسوم، الملاحظات',
           () => const CustomersScreen(),
+        ),
+        item(
+          Icons.account_balance_wallet_outlined,
+          'عهدة الفنيين',
+          'العجز والزيادة في التقفيل، واللي على كل فني',
+          () => const CustodyScreen(),
         ),
         const SectionTitle('الشغل'),
         item(

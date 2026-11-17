@@ -296,12 +296,29 @@ class ClosingsReviewScreen extends _ListScreen {
               : (diff > 0 ? BrandColors.good : null),
         ),
         if ('${c['note']}'.isNotEmpty) Muted('ملاحظة الفني: ${c['note']}'),
+        if (diff < 0)
+          Muted('العجز (${money(-diff)}) هيتسجل على الفني كعهدة.')
+        else if (diff > 0)
+          Muted('الزيادة (${money(diff)}) هتتسجل لحساب الفني.'),
         const SizedBox(height: 10),
         BusyButton(
           label: 'استلمت الفلوس',
           icon: Icons.check,
           onPressed: () async {
-            await api.post('manage/daily-closings/${c['id']}/confirm/');
+            var reason = '';
+            if (diff != 0) {
+              final r = await askText(
+                context,
+                diff < 0 ? 'سبب العجز' : 'سبب الزيادة',
+                hint: 'لازم تكتب السبب قبل ما تستلم',
+                ok: 'استلمت',
+              );
+              if (r == null) return;
+              reason = r;
+            }
+            await api.post('manage/daily-closings/${c['id']}/confirm/', {
+              'reason': reason,
+            });
             reload();
           },
         ),

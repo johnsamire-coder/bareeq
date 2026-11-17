@@ -108,12 +108,32 @@ class _ClosingScreenState extends State<ClosingScreen> {
                           ? BrandColors.danger
                           : null,
                     ),
+                    if ('${closing['confirm_reason'] ?? ''}'.isNotEmpty)
+                      KeyValue('سبب الفرق', '${closing['confirm_reason']}'),
                     KeyValue(
                       'الحالة',
                       confirmed ? 'المدير استلم' : 'مستني المدير',
                       bold: true,
                     ),
                   ],
+                ),
+              ),
+            ),
+          ],
+          if ((_s!['custody_balance'] as int? ?? 0) != 0) ...[
+            const SizedBox(height: 10),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: KeyValue(
+                  (_s!['custody_balance'] as int) > 0
+                      ? 'العهدة اللي عليك'
+                      : 'ليك عند الشركة',
+                  money((_s!['custody_balance'] as int).abs()),
+                  bold: true,
+                  color: (_s!['custody_balance'] as int) > 0
+                      ? BrandColors.danger
+                      : BrandColors.good,
                 ),
               ),
             ),
