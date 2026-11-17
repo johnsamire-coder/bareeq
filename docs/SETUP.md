@@ -50,7 +50,7 @@ git config user.email "jssolutions.eg@gmail.com"
 
 | الملف | فيه إيه | اتعمل في |
 |---|---|---|
-| (لسه مفيش) | | |
+| `backend/.env` | مفتاح Django السري (`DJANGO_SECRET_KEY`)، وباسورد قاعدة البيانات (`DB_PASSWORD`) | الخطوة 2 |
 
 ## 4. Claude Code
 
@@ -64,4 +64,53 @@ claude
 
 ## 5. تشغيل أجزاء البرنامج
 
-> بيتضاف هنا بعد كل خطوة (السيرفر بعد الخطوة 2، والتطبيق بعد الخطوة 11، ولوحة المدير بعد الخطوة 13).
+> بيتضاف هنا بعد كل خطوة (التطبيق بعد الخطوة 11، ولوحة المدير بعد الخطوة 13).
+
+### السيرفر (Django) — من الخطوة 2
+
+**أول مرة بس على الجهاز:**
+
+1) اعمل مستخدم وقاعدة بيانات `bareeq` (منفصلين تماماً عن أي حاجة تانية على الجهاز). الأمر ده هيسألك على باسورد `postgres`.
+حط مكان `PASTE_DB_PASSWORD` الباسورد اللي في Bitwarden (`bareeq - backend .env`، السطر `DB_PASSWORD`).
+
+PowerShell على جهازك (PS C:\):
+
+```powershell
+psql -U postgres -c "CREATE ROLE bareeq LOGIN PASSWORD 'PASTE_DB_PASSWORD' CREATEDB;" -c "CREATE DATABASE bareeq OWNER bareeq ENCODING 'UTF8';"
+```
+
+2) جهّز بيئة بايثون الخاصة بالمشروع، وملف الأسرار، وجداول قاعدة البيانات.
+
+PowerShell على جهازك (PS C:\):
+
+```powershell
+cd D:\bareeq\backend
+py -3.12 -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+copy .env.example .env
+notepad .env
+```
+
+في Notepad حط قيم `DJANGO_SECRET_KEY` و `DB_PASSWORD` من Bitwarden واحفظ. وبعدين:
+
+```powershell
+.\.venv\Scripts\python manage.py migrate
+.\.venv\Scripts\python manage.py createsuperuser
+```
+
+(الأمر الأخير بيعمل حساب دخول لصفحة الإدارة. احفظ الباسورد بتاعه في Bitwarden باسم `bareeq - local admin`.)
+
+**كل مرة عايز تشغل السيرفر:**
+
+```powershell
+cd D:\bareeq\backend
+.\.venv\Scripts\python manage.py runserver
+```
+
+افتح في المتصفح: `http://127.0.0.1:8000/api/health/` لازم يظهر `"status":"ok"`. وصفحة الإدارة: `http://127.0.0.1:8000/admin/`
+
+**الاختبارات:**
+
+```powershell
+.\.venv\Scripts\python manage.py test
+```
