@@ -200,6 +200,15 @@ DEFAULT_SETTINGS = [
         "value_type": "boolean",
         "value": False,
     },
+    # Payments (SPEC section 8)
+    {
+        "key": "instapay-payment-details",
+        "group": "payments",
+        "label": "بيانات InstaPay اللي بتظهر للعميل",
+        "description": "اسم المستخدم أو الرقم أو اللينك اللي العميل يحوّل عليه.",
+        "value_type": "text",
+        "value": "[مؤقت] بيانات حساب InstaPay لسه هتتحط. من فضلك ماتحوّلش فلوس دلوقتي واختار الدفع كاش.",
+    },
     # Wallet (SPEC section 11)
     {
         "key": "wallet-max-order-share-percent",

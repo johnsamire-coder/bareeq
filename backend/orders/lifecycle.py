@@ -60,11 +60,34 @@ def start_job(order, technician, lat=None, lng=None):
 
 
 @transaction.atomic
-def complete_job(order, technician, lat=None, lng=None):
+def complete_job(order, technician, lat=None, lng=None, cash_collected=None):
+    """Done: needs the 4 'after' photos and, when money is still due, the cash
+    amount actually collected. Issues the invoice in the same transaction."""
     order = _technician_step(order, technician, [S.IN_PROGRESS])
     if not has_all_sides(order, "after"):
         raise BusinessError("after_photos_missing", "صوّر العربية من الأربع نواحي بعد ما تخلص.")
-    return _move(order, S.COMPLETED, technician, lat, lng, actual_end=timezone.now())
+    if cash_collected is not None and (not isinstance(cash_collected, int) or cash_collected < 0):
+        raise BusinessError("bad_amount", "المبلغ مش صحيح.")
+    if order.amount_to_collect > 0 and cash_collected is None:
+        raise BusinessError("cash_amount_required", "اكتب المبلغ اللي استلمته كاش.")
+    _move(order, S.COMPLETED, technician, lat, lng, actual_end=timezone.now())
+    _after_completion(order, technician, cash_collected)
+    return order
+
+
+def _after_completion(order, technician, cash_collected):
+    from payments.invoices import issue_invoice
+    from payments.payments import record_cash
+
+    record_cash(order, technician, cash_collected)
+    issue_invoice(order)
+
+
+def _not_happening(order):
+    from payments.payments import on_order_not_happening
+
+    release_from_order(order)
+    on_order_not_happening(order)
 
 
 @transaction.atomic
@@ -87,7 +110,7 @@ def car_not_found(order, technician, lat, lng):
     wait = timedelta(minutes=get_setting("car-not-found-wait-minutes"))
     if timezone.now() < order.called_customer_at + wait:
         raise BusinessError("wait_more", "لازم تستنى العميل المدة المحددة بعد ما تتصل بيه.")
-    release_from_order(order)
+    _not_happening(order)
     _move(order, S.CAR_NOT_FOUND, technician, lat, lng)
     add_charge(order.customer, CustomerCharge.Kind.CAR_NOT_FOUND, get_setting("car-not-found-fee"), order)
     return order
@@ -104,7 +127,7 @@ def cancel_by_customer(order, reason=""):
     if order.status not in (S.PENDING_PAYMENT, S.CONFIRMED):
         raise BusinessError("cannot_cancel", "الطلب ده مينفعش يتلغي دلوقتي. كلم خدمة العملاء.")
     late = order.status == S.CONFIRMED and _is_late(order)
-    release_from_order(order)
+    _not_happening(order)
     _move(order, S.CANCELLED_BY_CUSTOMER, order.customer, note=reason[:300], cancel_reason=reason[:300])
     if late:
         add_charge(order.customer, CustomerCharge.Kind.LATE_CANCELLATION, get_setting("cancellation-late-fee"), order)
@@ -119,7 +142,7 @@ def cancel_by_company(order, manager, reason):
     order = _lock(order)
     if order.status not in (S.PENDING_PAYMENT, S.CONFIRMED, S.ON_THE_WAY, S.ARRIVED):
         raise BusinessError("cannot_cancel", "الطلب ده مينفعش يتلغي دلوقتي.")
-    release_from_order(order)
+    _not_happening(order)
     return _move(order, S.CANCELLED_BY_COMPANY, manager, note=reason[:300], cancel_reason=reason[:300])
 
 

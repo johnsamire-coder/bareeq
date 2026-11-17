@@ -51,6 +51,8 @@ class TechnicianApiTests(TestCase):
             for side in SIDES:
                 self.upload("after", side, cairo(WED, 14, 45))
             r = self.client.post(f"{self.base}/complete/")
+            self.assertEqual(r.json()["code"], "cash_amount_required")
+            r = self.client.post(f"{self.base}/complete/", {"cash_collected": 15000}, format="json")
             self.assertEqual(r.json()["status"], "completed")
         photos = self.client.get(f"{self.base}/photos/").json()
         self.assertEqual(len(photos), 8)

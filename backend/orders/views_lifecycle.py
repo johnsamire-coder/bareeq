@@ -67,7 +67,16 @@ class TechnicianJobViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vie
 
     @action(detail=True, methods=["post"])
     def complete(self, request, pk=None):
-        return self._step(request, lifecycle.complete_job)
+        """Body: {cash_collected (piastres, when money is due), lat, lng}."""
+        p = PointSerializer(data=request.data)
+        p.is_valid(raise_exception=True)
+        raw = request.data.get("cash_collected")
+        try:
+            cash = None if raw in (None, "") else int(raw)
+        except (TypeError, ValueError):
+            raise BusinessError("bad_amount", "المبلغ مش صحيح.")
+        order = lifecycle.complete_job(self.get_object(), request.user, cash_collected=cash, **p.validated_data)
+        return Response(ManagerOrderSerializer(order).data)
 
     @action(detail=True, methods=["post"], url_path="called-customer")
     def called_customer(self, request, pk=None):

@@ -170,26 +170,11 @@ def create_order(customer, address_id, items, start):
     return order
 
 
-PAYMENT_METHODS_NOW = ("cash",)  # InstaPay and wallet arrive in step 9
+def confirm_order(order, payment_method, wallet_amount=0, proof_file=None):
+    """Kept for callers of step 7; the real work is in payments.payments."""
+    from payments.payments import confirm_with_payment
 
-
-@transaction.atomic
-def confirm_order(order, payment_method):
-    order = Order.objects.select_for_update().get(pk=order.pk)
-    if payment_method not in PAYMENT_METHODS_NOW:
-        raise BusinessError("payment_method_not_available", "طريقة الدفع دي لسه مش متاحة.")
-    if order.status != Order.Status.PENDING_PAYMENT:
-        raise BusinessError("not_pending", "الطلب ده مش مستني تأكيد.")
-    if order.hold_expires_at and order.hold_expires_at <= timezone.now():
-        release_from_order(order)
-        order.status = Order.Status.EXPIRED
-        order.save(update_fields=["status", "updated_at"])
-        raise BusinessError("hold_expired", "خلص وقت الحجز المؤقت. اختار الميعاد تاني.")
-    order.status = Order.Status.CONFIRMED
-    order.payment_method = payment_method
-    order.hold_expires_at = None
-    order.save(update_fields=["status", "payment_method", "hold_expires_at", "updated_at"])
-    return order
+    return confirm_with_payment(order, payment_method, wallet_amount=wallet_amount, proof_file=proof_file)
 
 
 @transaction.atomic

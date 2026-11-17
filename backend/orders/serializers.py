@@ -20,6 +20,8 @@ class CreateOrderSerializer(SlotsRequestSerializer):
 
 class ConfirmSerializer(serializers.Serializer):
     payment_method = serializers.CharField()
+    wallet_amount = serializers.IntegerField(required=False, min_value=0, default=0)
+    proof = serializers.FileField(required=False)
 
 
 class ReassignSerializer(serializers.Serializer):
@@ -45,7 +47,8 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["id", "status", "status_label", "scheduled_start", "scheduled_end", "total_minutes",
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
-                  "payment_method", "subtotal", "discount", "total", "charges_total", "amount_due", "items",
+                  "payment_method", "subtotal", "discount", "total", "charges_total", "amount_due", "wallet_used",
+                  "amount_to_collect", "items",
                   "actual_start", "actual_end", "cancel_reason", "created_at"]
 
 

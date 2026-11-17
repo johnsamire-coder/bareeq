@@ -56,7 +56,7 @@ class TechnicianFlowTests(TestCase):
                 complete_job(self.order, self.tech)
             self.assertEqual(e.exception.detail["code"], "after_photos_missing")
             shoot(self.order, self.tech, "after", when=cairo(WED, 14, 50))
-            complete_job(self.order, self.tech)
+            complete_job(self.order, self.tech, cash_collected=15000)
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, "completed")
         self.assertEqual((self.order.actual_start, self.order.actual_end), (cairo(WED, 14), cairo(WED, 14, 50)))

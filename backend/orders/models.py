@@ -42,6 +42,8 @@ class Order(models.Model):
     discount = models.PositiveIntegerField("الخصم (قرش)", default=0)
     total = models.PositiveIntegerField("الإجمالي (قرش)")
     charges_total = models.PositiveIntegerField("رسوم سابقة مضافة (قرش)", default=0)
+    wallet_used = models.PositiveIntegerField("من المحفظة (قرش)", default=0)
+    materials_cost = models.PositiveIntegerField("تكلفة الخامات (قرش)", default=0)
     actual_start = models.DateTimeField("بدأ فعلاً", null=True, blank=True)
     actual_end = models.DateTimeField("خلص فعلاً", null=True, blank=True)
     called_customer_at = models.DateTimeField("الفني كلم العميل", null=True, blank=True)
@@ -62,6 +64,25 @@ class Order(models.Model):
     def amount_due(self):
         """Services total + older unpaid fees added to this order."""
         return self.total + self.charges_total
+
+    @property
+    def oil_total(self):
+        return sum((i.quote.get("oil") or {}).get("price", 0) for i in self.items.all())
+
+    @property
+    def amount_to_collect(self):
+        """What the technician still has to collect in cash."""
+        from payments.models import Payment
+
+        instapay = sum(p.amount for p in self.payments.filter(
+            method=Payment.Method.INSTAPAY,
+            status__in=[Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]))
+        return max(0, self.amount_due - self.wallet_used - instapay)
+
+    @property
+    def margin(self):
+        """Services income minus oil (sold at cost) minus materials used."""
+        return self.total - self.oil_total - self.materials_cost
 
     @property
     def place(self):

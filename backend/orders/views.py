@@ -3,6 +3,7 @@ from datetime import date
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from accounts.models import User
@@ -50,12 +51,25 @@ class MyOrderViewSet(CustomerOrderActionsMixin, mixins.ListModelMixin, mixins.Re
         order = create_order(request.user, d["address"], d["items"], d["start"])
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def confirm(self, request, pk=None):
+        """{payment_method: cash|instapay, wallet_amount (piastres, optional), proof (image, InstaPay)}."""
         s = ConfirmSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        order = confirm_order(self.get_object(), s.validated_data["payment_method"])
+        d = s.validated_data
+        order = confirm_order(self.get_object(), d["payment_method"], wallet_amount=d.get("wallet_amount") or 0,
+                              proof_file=d.get("proof"))
         return Response(OrderSerializer(order).data)
+
+    @action(detail=True, methods=["get"])
+    def invoice(self, request, pk=None):
+        from payments.models import Invoice
+        from payments.serializers import InvoiceSerializer
+
+        inv = Invoice.objects.filter(order=self.get_object()).order_by("-issued_at").first()
+        if inv is None:
+            raise BusinessError("no_invoice", "الفاتورة بتطلع بعد ما الشغل يخلص.", status=404)
+        return Response(InvoiceSerializer(inv).data)
 
 
 class ManagerOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):

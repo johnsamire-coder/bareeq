@@ -37,7 +37,7 @@ class BookingApiTests(TestCase):
             self.assertEqual(order["total"], 24300)
 
             r = self.client.post(f"/api/orders/{order['id']}/confirm/", {"payment_method": "instapay"}, format="json")
-            self.assertEqual(r.json()["code"], "payment_method_not_available")
+            self.assertEqual(r.json()["code"], "proof_required")  # InstaPay needs the transfer screenshot
             r = self.client.post(f"/api/orders/{order['id']}/confirm/", {"payment_method": "cash"}, format="json")
             self.assertEqual(r.json()["status"], "confirmed")
 
