@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/common.dart';
 import 'cars_catalog_screen.dart';
 import 'close_day_screen.dart';
+import 'customers_screen.dart';
+import 'reports_screen.dart';
 import 'lists.dart';
 import 'pricing_screens.dart';
 import 'settings_screens.dart';
@@ -34,6 +36,19 @@ class AdminMenu extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const SectionTitle('العملاء والأرقام'),
+        item(
+          Icons.query_stats,
+          'التقارير',
+          'الإيراد واللي اتحصّل والهامش والعملاء والمدد',
+          () => const ReportsScreen(),
+        ),
+        item(
+          Icons.people_outline,
+          'العملاء',
+          'ملف كل عميل، المحفظة، الرسوم، الملاحظات',
+          () => const CustomersScreen(),
+        ),
         const SectionTitle('الشغل'),
         item(
           Icons.engineering_outlined,

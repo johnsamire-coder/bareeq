@@ -170,3 +170,17 @@ class OtpRequest(models.Model):
 
     def matches(self, code):
         return hmac.compare_digest(self.code_hash, hash_code(self.phone, code))
+
+
+class CustomerNote(models.Model):
+    """Manager's private note on a customer (never shown to the customer)."""
+
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="manager_notes")
+    text = models.CharField("الملاحظة", max_length=1000)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="+")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "ملاحظة على عميل"
+        verbose_name_plural = "ملاحظات على العملاء"
