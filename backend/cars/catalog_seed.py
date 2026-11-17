@@ -1,7 +1,7 @@
 """Starting car catalog: brands and models common in Egypt, each model with its size.
 
 Only used to fill an empty catalog the first time. After that the manager
-reviews and edits brands and models from the dashboard.
+reviews and edits brands and models from the manager screens in the app.
 Sizes: H = hatchback, S = sedan, U = SUV (incl. pick-ups and 7-seaters), L = luxury.
 """
 

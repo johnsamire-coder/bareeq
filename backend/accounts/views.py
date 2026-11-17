@@ -108,7 +108,7 @@ class TechnicianViewSet(
 @api_view(["GET"])
 @permission_classes([IsManager])
 def terms_status(request):
-    """For the dashboard: do the published terms still match the settings?"""
+    """For the manager screens: do the published terms still match the settings?"""
     changed = terms_outdated_settings()
     current = TermsVersion.current()
     return Response(

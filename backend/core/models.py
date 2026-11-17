@@ -5,7 +5,7 @@ from django.utils import timezone
 
 
 class Setting(models.Model):
-    """One business number or text that the manager can edit from the dashboard.
+    """One business number or text that the manager can edit from the app.
 
     Every business rule (buffers, gaps, holds, wallet rules, ...) lives here,
     never hard-coded. Money is always stored as integer piastres.

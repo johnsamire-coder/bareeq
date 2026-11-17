@@ -8,7 +8,8 @@ The visual identity is in `design/brand-kit/`.
 ## Stack (same as the owner's other product, MotionHR)
 - Backend: Django + Django REST Framework + PostgreSQL. Folder `backend/`.
 - Mobile: ONE Flutter app for all roles (customer, technician, manager). Folder `mobile/`.
-- Manager web dashboard: Next.js. Folder `web/`.
+- Manager screens: INSIDE the same Flutter app (client decision, 17 Nov 2026). There is NO web dashboard in phase 1; do not build `web/` or use Next.js unless John asks again.
+- The Django admin page (`/admin/`) stays as an internal backup for us only. It is never given to or shown to the client.
 - Arabic-first UI, right-to-left everywhere. Colors and logo from `design/brand-kit/` (see `05-Bareeq-Brand-Guide.pdf`). Arabic font: Cairo.
 
 ## How to work with the owner (John) — IMPORTANT
@@ -24,7 +25,7 @@ The visual identity is in `design/brand-kit/`.
 - Do not mention AI tools in anything the client sees (app text, commit messages shown to the client, documents for the client).
 
 ## Engineering rules
-- Every business number (prices, durations, buffers, minimum gap between orders, working hours, loyalty/referral/cashback rules, cancellation terms text) is a SETTING stored in the database and editable from the manager dashboard. Never hard-code them.
+- Every business number (prices, durations, buffers, minimum gap between orders, working hours, loyalty/referral/cashback rules, cancellation terms text) is a SETTING stored in the database and editable from the manager screens in the app. Never hard-code them.
 - Money: store as integer piastres (or Decimal), never float. Every wallet change is a ledger row (see SPEC).
 - Write tests for scheduling (slot calculation) and wallet/ledger logic before UI work on them.
 - Commit in small, clear commits. Keep secrets out of git (`.env` files, keys).

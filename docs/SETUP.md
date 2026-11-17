@@ -10,7 +10,7 @@
 | Git | حفظ الشغل ورفعه على GitHub | `winget install --id Git.Git -e` |
 | Python 3.12 | السيرفر (Django) | `winget install --id Python.Python.3.12 -e` |
 | PostgreSQL 16 | قاعدة البيانات | `winget install --id PostgreSQL.PostgreSQL.16 -e` |
-| Node.js (النسخة LTS، 24) | لوحة المدير على الويب | `winget install --id OpenJS.NodeJS.LTS -e` |
+| Node.js (النسخة LTS، 24) | مش محتاجينه دلوقتي (كان للوحة الويب اللي اتشالت). سيبه لو متسطب | `winget install --id OpenJS.NodeJS.LTS -e` |
 | Java 17 | مطلوب لتطبيق أندرويد | `winget install --id Microsoft.OpenJDK.17 -e` |
 | Android Studio | تشغيل التطبيق على أندرويد | `winget install --id Google.AndroidStudio -e` |
 | Flutter 3.44 (stable) | تطبيق الموبايل | مش موجود في winget. نزّل الـ zip من docs.flutter.dev وفكه في `D:\src\flutter` وضيف `D:\src\flutter\bin` للـ Path |
@@ -64,7 +64,7 @@ claude
 
 ## 5. تشغيل أجزاء البرنامج
 
-> بيتضاف هنا بعد كل خطوة (لوحة المدير بعد الخطوة 13).
+> بيتضاف هنا بعد كل خطوة. (مفيش لوحة ويب: شاشات المدير جوه نفس التطبيق.)
 
 ### السيرفر (Django) — من الخطوة 2
 

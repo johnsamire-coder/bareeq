@@ -40,4 +40,4 @@ class OrderEventAdmin(admin.ModelAdmin):
 class CustomerChargeAdmin(admin.ModelAdmin):
     list_display = ("customer", "kind", "amount", "created_at", "applied_to_order", "waived_at", "waived_by")
     list_filter = ("kind",)
-    readonly_fields = [f.name for f in CustomerCharge._meta.fields]  # waive from the dashboard (needs a reason)
+    readonly_fields = [f.name for f in CustomerCharge._meta.fields]  # waive from the manager screens in the app (needs a reason)

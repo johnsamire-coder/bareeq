@@ -19,7 +19,7 @@ def health(request):
 
 
 class SettingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    """Settings for the manager dashboard and app. Managers only."""
+    """Settings for the manager screens in the app. Managers only."""
 
     queryset = Setting.objects.all()
     serializer_class = SettingSerializer

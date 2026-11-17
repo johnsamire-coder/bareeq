@@ -118,7 +118,7 @@ REST_FRAMEWORK = {
 }
 
 # Web pages allowed to call the API from a browser (the app while testing on
-# Chrome, and later the manager dashboard). Comma separated, from backend/.env.
+# Chrome). There is no web dashboard. Comma separated, from backend/.env.
 CORS_ALLOWED_ORIGINS = [o.strip() for o in env("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()]
 
 # Where one-time login codes go. Until an SMS company is chosen, they are

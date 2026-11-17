@@ -25,7 +25,7 @@ class DamageReportAdmin(admin.ModelAdmin):
 
 @admin.register(ClosedDay)
 class ClosedDayAdmin(admin.ModelAdmin):
-    """View only here: closing a day from the dashboard also cancels and notifies."""
+    """View only here: closing a day from the manager screens in the app also cancels and notifies."""
 
     list_display = ("date", "zone", "reason", "created_by")
 

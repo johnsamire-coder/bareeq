@@ -12,7 +12,7 @@ Source: the client study written for John (Arabic) and the client's answers of 1
 | --- | --- | --- |
 | Customer | Self sign-up in the app | Book, my orders, my cars, my addresses, wallet, referral code, ratings, notifications |
 | Technician | Manager adds his phone number; cannot self-register | Today's jobs in order, map + "navigate" button, status buttons, before/after photos, "car not found", daily cash closing |
-| Manager | Created by us (seed / Django admin) | Everything, in the app (quick view) and in the web dashboard (full) |
+| Manager | Created by us (command `create_manager`) | Everything, inside the mobile app (no web dashboard, client decision 17 Nov 2026) |
 | Supervisor (phase 4) | Manager creates | Assign/move jobs between technicians. No prices, no revenue |
 
 Login for all roles: phone number + one-time code.
@@ -39,15 +39,15 @@ Login for all roles: phone number + one-time code.
 ## 4. Addresses and zones (Google Maps)
 
 - Map opens on current location (if permitted) or a search box with Places autocomplete. Customer drags the pin to the exact spot, then adds building number, floor, landmark. Saved addresses with labels (Home, Work, ...).
-- **Zones are polygons drawn on a map in the manager dashboard**, not names. The zone of an address = the polygon containing the pin.
+- **Zones are polygons drawn on a map in the manager screens of the app**, not names. The zone of an address = the polygon containing the pin.
 - Pin outside all zones → "We're not in your area yet" + "Notify me when you arrive" (store these requests; manager sees them as a demand list).
 - Technician sees the same pin; "Navigate" opens Google Maps on his phone.
 
 ## 5. Services, prices, durations
 
 - Services (initial list, editable): exterior wash, interior wash, engine wash, exterior detailing, interior detailing, polish & protection (wax/ceramic), headlight restoration, **oil change** (company supplies the oil at cost; oil type/grade chosen by the customer; oil price shown separately from labor).
-- **Price = setting per service × zone × car size.** Edited from a "Prices" section in the dashboard.
-- **Duration = setting per service × car size** (minutes). Initial values are estimates to be tuned from real jobs; the dashboard should show average actual job time per service/size from completed orders to help tuning.
+- **Price = setting per service × zone × car size.** Edited from a "Prices" section in the manager screens of the app.
+- **Duration = setting per service × car size** (minutes). Initial values are estimates to be tuned from real jobs; the manager reports should show average actual job time per service/size from completed orders to help tuning.
 - Rules between services (settings):
   - "replaces": exterior detailing replaces exterior wash; interior detailing replaces interior wash. Selecting one auto-removes the other with a short message.
   - "needs shade": blocked or warned when the car parks on the street.
@@ -114,9 +114,12 @@ Client decision: all of this is configured from **system settings**.
 - Coupons: % or amount, zone, usage limit, expiry.
 - Manager report: open wallet liability today; credited / spent / expired this month by type.
 
-## 12. Manager web dashboard (Next.js)
+## 12. Manager screens (inside the mobile app)
 
-Today's orders (map + list), technicians and their schedules, move a job, confirm InstaPay payments, confirm daily closings, customers (profile: orders, ratings, wallet, notes), prices (service × zone × size), durations (service × size), zones (draw polygons), working hours/days off, service rules, bundles, coupons, loyalty/referral/cashback settings, terms text, "notify me" demand list, ratings, reports (revenue per day/month/zone/technician/service, new vs returning customers, bonus cost, km driven per technician).
+**Client decision (17 Nov 2026): no web dashboard.** Everything the manager does is in the same Flutter app, designed for a phone screen.
+The Django admin page stays only as an internal backup for the development team; it is never given to the client.
+
+Today's orders (by technician, map and list), move a job, confirm InstaPay payments and refunds, confirm daily closings, bad ratings and damage reports, close a day or a zone, customers (profile: orders, ratings, wallet, fees, notes; add wallet credit; waive a fee with a reason), technicians (add, stop, zones, start point, working hours, days off), zones (draw polygons on the map), the "notify me" demand list, prices (service × zone × size), durations (service × size), service rules, bundles, oil types, materials, the settings table, terms versions (publish a new version), car brands/models and the review list for unlisted models, quick lists ("how did you hear about us", rating tags), coupons and loyalty/referral/cashback settings (phase 2), reports (revenue per day/month/zone/technician/service, revenue vs collected vs wallet, wash margin, new vs returning customers, average actual job time per service/size, ratings, open wallet liability, unpaid fees).
 
 ## 13. Google Maps usage and cost control
 
@@ -124,7 +127,7 @@ Maps SDK in the app (free), Places Autocomplete, Geocoding, Routes (Compute Rout
 
 ## 14. Phases
 
-1. **Operations**: roles, OTP login, terms, cars catalog, addresses/zones, services/prices/durations as settings, scheduling, technician flow with photos, daily closing, push notifications, ratings, cash + wallet field + InstaPay with manual confirm, basic dashboard.
+1. **Operations**: roles, OTP login, terms, cars catalog, addresses/zones, services/prices/durations as settings, scheduling, technician flow with photos, daily closing, push notifications, ratings, cash + wallet field + InstaPay with manual confirm, manager screens in the app.
 2. **Retention**: wallet ledger, cashback, referral, wash card, coupons, win-back and next-wash notifications.
 3. **Payments & subscription**: card/e-wallet gateway, monthly subscription (e.g. 4 washes/month, fixed weekly slot).
 4. **Scale**: live technician tracking, express orders, supervisor role, detailed reports, distance fee.
