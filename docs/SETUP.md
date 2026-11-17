@@ -8,10 +8,24 @@
 | البرنامج | لازمته | أمر التسطيب |
 |---|---|---|
 | Git | حفظ الشغل ورفعه على GitHub | `winget install --id Git.Git -e` |
+| Python 3.12 | السيرفر (Django) | `winget install --id Python.Python.3.12 -e` |
+| PostgreSQL 16 | قاعدة البيانات | `winget install --id PostgreSQL.PostgreSQL.16 -e` |
+| Node.js (النسخة LTS، 24) | لوحة المدير على الويب | `winget install --id OpenJS.NodeJS.LTS -e` |
+| Java 17 | مطلوب لتطبيق أندرويد | `winget install --id Microsoft.OpenJDK.17 -e` |
+| Android Studio | تشغيل التطبيق على أندرويد | `winget install --id Google.AndroidStudio -e` |
+| Flutter 3.44 (stable) | تطبيق الموبايل | مش موجود في winget. نزّل الـ zip من docs.flutter.dev وفكه في `D:\src\flutter` وضيف `D:\src\flutter\bin` للـ Path |
 
-> باقي البرامج (Python و PostgreSQL و Node و Flutter) هتتضاف هنا بالنسخ المضبوطة بعد الخطوة 1.
+ملاحظات:
+- **PostgreSQL:** وقت التسطيب هيسألك على باسورد للمستخدم `postgres`. احفظه في Bitwarden فوراً باسم `PostgreSQL postgres (local)`.
+- **Android Studio:** بعد ما يتسطب افتحه مرة، وخليه ينزّل الـ Android SDK في `D:\Android\Sdk` عشان الـ C: مساحته قليلة. بعدين نفّذ `flutter doctor --android-licenses` ووافق على كله.
+- لو في أكتر من نسخة Python على الجهاز، استخدم دايماً `py -3.12`.
+- التطبيق بيتعمل لأندرويد من الجهاز ده. نسخة الآيفون محتاجة جهاز ماك (هنتكلم فيها بعدين).
 
-بعد التسطيب اقفل PowerShell وافتحه تاني.
+بعد التسطيب اقفل PowerShell وافتحه تاني، وبعدين اتأكد إن كله تمام بالأمر ده:
+
+```powershell
+git --version; py -3.12 --version; node --version; flutter doctor
+```
 
 ## 2. هات المشروع من GitHub
 
