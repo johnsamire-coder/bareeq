@@ -53,7 +53,8 @@ def _check_code(phone, code):
     otp = (
         OtpRequest.objects.select_for_update()
         .filter(phone=phone, used_at__isnull=True, expires_at__gt=timezone.now())
-        .order_by("-created_at")
+        # Two codes can get the same time on coarse clocks (Windows): the newest row wins.
+        .order_by("-created_at", "-id")
         .first()
     )
     if otp is None:
