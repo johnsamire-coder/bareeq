@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/", include(router.urls)),
     path("api/", include("accounts.urls")),
     path("api/", include("cars.urls")),
+    path("api/", include("places.urls")),
 ]
