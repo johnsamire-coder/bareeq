@@ -209,6 +209,34 @@ DEFAULT_SETTINGS = [
         "value_type": "text",
         "value": "[مؤقت] بيانات حساب InstaPay لسه هتتحط. من فضلك ماتحوّلش فلوس دلوقتي واختار الدفع كاش.",
     },
+    # VAT: off for now; invoices are issued without tax.
+    {
+        "key": "vat-enabled",
+        "group": "payments",
+        "label": "تطبيق ضريبة القيمة المضافة",
+        "description": "مقفول دلوقتي: الأسعار والفاتورة من غير ضريبة.",
+        "value_type": "boolean",
+        "value": False,
+    },
+    {
+        "key": "vat-percent",
+        "group": "payments",
+        "label": "نسبة ضريبة القيمة المضافة",
+        "description": "فاضية لحد ما نعرفها من المحاسب.",
+        "value_type": "percent",
+        "value": None,
+        "allow_empty": True,
+    },
+    # Test mode (must be switched off before launch)
+    {
+        "key": "demo-mode",
+        "group": "login",
+        "label": "وضع تجربة",
+        "description": "لما يبقى شغال: كود الدخول بيظهر على شاشة الدخول نفسها (من غير رسايل)، "
+                       "وفوق في التطبيق شريط «نسخة تجريبية». لازم يتقفل قبل الإطلاق.",
+        "value_type": "boolean",
+        "value": True,
+    },
     # Wallet (SPEC section 11)
     {
         "key": "wallet-max-order-share-percent",
@@ -286,6 +314,8 @@ def seed_default_settings(SettingModel):
     columns = {f.name for f in SettingModel._meta.get_fields()}
     created = 0
     for item in DEFAULT_SETTINGS:
+        if any(k not in columns for k in item if k != "key"):
+            continue  # needs a newer table; a later migration adds it
         _, was_created = SettingModel.objects.get_or_create(
             key=item["key"], defaults={k: v for k, v in item.items() if k != "key" and k in columns}
         )

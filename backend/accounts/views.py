@@ -30,10 +30,13 @@ def otp_request(request):
     s = OtpRequestSerializer(data=request.data)
     s.is_valid(raise_exception=True)
     try:
-        request_otp(**s.validated_data)
+        demo_code = request_otp(**s.validated_data)
     except OtpError as e:
         return _error(e)
-    return Response({"detail": "الكود اتبعت."})
+    body = {"detail": "الكود اتبعت."}
+    if demo_code:
+        body["demo_code"] = demo_code
+    return Response(body)
 
 
 @api_view(["POST"])

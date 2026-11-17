@@ -11,6 +11,7 @@ router.register("settings", views.SettingViewSet, basename="setting")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", views.health, name="health"),
+    path("api/app-config/", views.app_config, name="app-config"),
     path("api/manage/inbox/", manager_inbox, name="manager-inbox"),
     path("api/", include(router.urls)),
     path("api/", include("accounts.urls")),

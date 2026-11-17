@@ -45,7 +45,8 @@ def request_otp(phone, device_id=""):
         expires_at=now + timedelta(minutes=get_setting("otp-code-valid-minutes")),
     )
     get_otp_sender().send(phone, code)
-    return phone
+    # Test mode: the code is also shown on the login screen (no SMS company yet).
+    return code if get_setting("demo-mode") else None
 
 
 def _check_code(phone, code):

@@ -135,6 +135,7 @@ class Material(models.Model):
     unit_cost = models.PositiveIntegerField("سعر الوحدة (قرش)")
     sort_order = models.PositiveIntegerField("الترتيب", default=0)
     is_active = models.BooleanField("مستخدمة", default=True)
+    is_provisional = models.BooleanField("تجريبي", default=False, help_text="سعر تجريبي لسه محتاج يتأكد.")
 
     class Meta:
         ordering = ["sort_order", "id"]

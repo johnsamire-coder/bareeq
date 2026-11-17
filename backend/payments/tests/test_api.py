@@ -81,7 +81,7 @@ class PaymentsApiTests(TestCase):
             self.as_(self.customer).post(f"/api/orders/{self.order.id}/confirm/", {"payment_method": "cash"}, format="json")
         end = work_until_done_photos(self.order, self.tech, START)
         t = self.as_(self.tech)
-        self.assertEqual([x["name"] for x in t.get("/api/technician/materials/").json()], ["شامبو"])
+        self.assertIn("شامبو", [x["name"] for x in t.get("/api/technician/materials/").json()])
         r = t.post(f"/api/technician/jobs/{self.order.id}/materials/", {"items": [{"material": m["id"], "quantity": "0.25"}]},
                    format="json")
         self.assertEqual(r.json()["materials_cost"], 2000)

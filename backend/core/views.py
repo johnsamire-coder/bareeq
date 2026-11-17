@@ -29,3 +29,12 @@ class SettingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Up
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def app_config(request):
+    """What the app needs before login: is this the test version?"""
+    from .services import get_setting
+
+    return Response({"demo_mode": bool(get_setting("demo-mode"))})

@@ -26,7 +26,8 @@ class Setting(models.Model):
     label = models.CharField("الاسم", max_length=200)
     description = models.TextField("الشرح", blank=True)
     value_type = models.CharField("النوع", max_length=20, choices=ValueType.choices)
-    value = models.JSONField("القيمة")
+    value = models.JSONField("القيمة", null=True, blank=True)
+    allow_empty = models.BooleanField("ممكن تبقى فاضية", default=False)
     mentioned_in_terms = models.BooleanField(
         "مكتوب في الشروط", default=False, help_text="لو اتغير، لازم تتنشر نسخة شروط جديدة."
     )
@@ -60,7 +61,10 @@ class Setting(models.Model):
 
     def clean(self):
         v = self.value
-        if self.value_type in self.NUMERIC_TYPES:
+        if v is None:
+            if not self.allow_empty:
+                raise ValidationError({"value": "لازم تكتب قيمة."})
+        elif self.value_type in self.NUMERIC_TYPES:
             # bool is a subclass of int in Python, so reject it explicitly.
             if isinstance(v, bool) or not isinstance(v, int):
                 raise ValidationError({"value": "لازم تكون رقم صحيح من غير كسور."})
@@ -74,6 +78,10 @@ class Setting(models.Model):
         elif self.value_type == self.ValueType.TEXT:
             if not isinstance(v, str):
                 raise ValidationError({"value": "لازم تكون نص."})
+        if self.key == "vat-enabled" and v is True:
+            # Prices and invoices are without VAT for now; the calculation is not built yet.
+            raise ValidationError({"value": "الضريبة لسه مش متحسبة في الفاتورة، فالإعداد ده لازم يفضل مقفول دلوقتي. "
+                                            "لما نعرف النسبة وطريقة الحساب هنعملها."})
 
     def save(self, *args, **kwargs):
         self.full_clean()

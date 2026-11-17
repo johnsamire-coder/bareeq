@@ -48,7 +48,12 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Material
-        fields = ["id", "name", "unit", "unit_label", "unit_cost", "sort_order", "is_active"]
+        fields = ["id", "name", "unit", "unit_label", "unit_cost", "sort_order", "is_active", "is_provisional"]
+        read_only_fields = ["is_provisional"]
+
+    def save(self, **kwargs):
+        # Saved by the manager = a real price, no longer a test one.
+        return super().save(is_provisional=False, **kwargs)
 
 
 class DailyClosingSerializer(serializers.ModelSerializer):
