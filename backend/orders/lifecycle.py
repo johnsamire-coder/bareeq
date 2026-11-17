@@ -42,7 +42,11 @@ def _technician_step(order, technician, allowed_from):
 @transaction.atomic
 def on_the_way(order, technician, lat=None, lng=None):
     order = _technician_step(order, technician, [S.CONFIRMED])
-    return _move(order, S.ON_THE_WAY, technician, lat, lng)
+    _move(order, S.ON_THE_WAY, technician, lat, lng)
+    from notifications.events import technician_on_the_way
+
+    technician_on_the_way(order)
+    return order
 
 
 @transaction.atomic
@@ -79,8 +83,11 @@ def _after_completion(order, technician, cash_collected):
     from payments.invoices import issue_invoice
     from payments.payments import record_cash
 
+    from notifications.events import job_done
+
     record_cash(order, technician, cash_collected)
     issue_invoice(order)
+    job_done(order)
 
 
 def _not_happening(order):
@@ -113,6 +120,9 @@ def car_not_found(order, technician, lat, lng):
     _not_happening(order)
     _move(order, S.CAR_NOT_FOUND, technician, lat, lng)
     add_charge(order.customer, CustomerCharge.Kind.CAR_NOT_FOUND, get_setting("car-not-found-fee"), order)
+    from notifications.events import car_not_found as notify_car_not_found
+
+    notify_car_not_found(order)
     return order
 
 
@@ -158,6 +168,10 @@ def reschedule(order, new_start):
     _check_start(new_start, timezone.now())
     late = _is_late(order)
     day = new_start.astimezone(CAIRO).date()
+    from scheduling.models import is_closed
+
+    if is_closed(order.zone, day):
+        raise BusinessError("day_closed", "اليوم ده مقفول. اختار يوم تاني.", status=409)
     cfg, travel = config(), travel_function()
     fits = []
     for profile in schedulable_technicians(order.zone, lock=True):

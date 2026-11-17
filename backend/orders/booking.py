@@ -18,7 +18,7 @@ from scheduling.availability import (
     travel_function,
 )
 from scheduling.engine import can_fit, slot_grid
-from scheduling.models import TechnicianProfile
+from scheduling.models import TechnicianProfile, is_closed
 from services.pricing import build_quote
 
 from .charges import attach_to_order, charges_payload, outstanding_charges, release_from_order
@@ -90,7 +90,7 @@ def available_slots(customer, address_id, items):
     result_days = []
     for day in days:
         counts = {}
-        for profile in techs:
+        for profile in ([] if is_closed(prep.zone, day) else techs):
             shift = shift_for(profile, day)
             if shift is None:
                 continue
@@ -142,6 +142,8 @@ def create_order(customer, address_id, items, start):
     _check_start(start, now)
     cfg, travel = config(), travel_function()
     day = start.astimezone(CAIRO).date()
+    if is_closed(prep.zone, day):
+        raise BusinessError("day_closed", "اليوم ده مقفول. اختار يوم تاني.", status=409)
 
     # Lock the zone's technicians so two customers cannot take the same time.
     best = None
@@ -214,6 +216,11 @@ def reassign(order, technician, force=False):
         )
         if not ok:
             raise BusinessError("technician_not_available", "الفني ده مش فاضي في الميعاد ده أو مش بيغطي المنطقة.")
+    changed = order.technician_id != technician.id
     order.technician = technician
     order.save(update_fields=["technician", "updated_at"])
+    if changed and order.status == Order.Status.CONFIRMED:
+        from notifications.events import technician_changed
+
+        technician_changed(order)
     return order

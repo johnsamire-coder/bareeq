@@ -116,6 +116,9 @@ def _finish_login(phone, otp, signup):
             heard_about=signup.get("heard_about"),
         )
         TermsAcceptance.objects.create(user=user, terms_version=current)
+        from notifications.events import welcome
+
+        welcome(user)
 
     otp.used_at = timezone.now()
     otp.save(update_fields=["used_at"])

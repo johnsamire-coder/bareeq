@@ -52,6 +52,11 @@ def confirm_with_payment(order, method, wallet_amount=0, proof_file=None):
     order.wallet_used = wallet_amount
     order.hold_expires_at = None
     order.save(update_fields=["status", "payment_method", "wallet_used", "hold_expires_at", "updated_at"])
+    from notifications import events
+
+    events.booking_confirmed(order)
+    if method == Payment.Method.INSTAPAY:
+        events.instapay_to_review(order)
     return order
 
 

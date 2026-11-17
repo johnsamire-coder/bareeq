@@ -45,11 +45,15 @@ def credit(customer, amount, kind, expires_at=None, order=None, created_by=None,
         if not (note or "").strip():
             raise BusinessError("note_required", "لازم تكتب سبب إضافة الرصيد.")
     now = timezone.now()
-    return WalletEntry.objects.create(
+    entry = WalletEntry.objects.create(
         customer=customer, kind=kind, amount=amount, remaining=amount,
         expires_at=expires_at or now + timedelta(days=get_setting("wallet-credit-expiry-days")),
         order=order, created_by=created_by, note=(note or "").strip()[:300], created_at=now,
     )
+    from notifications.events import wallet_credit
+
+    wallet_credit(entry)
+    return entry
 
 
 @transaction.atomic

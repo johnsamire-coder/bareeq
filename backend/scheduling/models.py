@@ -77,3 +77,24 @@ class DayOff(models.Model):
         ordering = ["date"]
         verbose_name = "إجازة"
         verbose_name_plural = "الإجازات"
+
+
+class ClosedDay(models.Model):
+    """The manager closes a date (one zone, or all zones when zone is empty),
+    e.g. bad weather. Bookings that day are cancelled free and no new ones are taken."""
+
+    date = models.DateField("التاريخ")
+    zone = models.ForeignKey(Zone, verbose_name="المنطقة (فاضي = كل المناطق)", null=True, blank=True,
+                             on_delete=models.CASCADE)
+    reason = models.CharField("السبب", max_length=200)
+    created_by = models.ForeignKey(django_settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date"]
+        verbose_name = "يوم مقفول"
+        verbose_name_plural = "أيام مقفولة"
+
+
+def is_closed(zone, day):
+    return ClosedDay.objects.filter(date=day).filter(models.Q(zone=zone) | models.Q(zone__isnull=True)).exists()

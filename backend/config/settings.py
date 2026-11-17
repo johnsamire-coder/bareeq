@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "scheduling",
     "orders",
     "payments",
+    "notifications",
+    "feedback",
 ]
 
 MIDDLEWARE = [

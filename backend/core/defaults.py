@@ -243,6 +243,14 @@ DEFAULT_SETTINGS = [
         "value_type": "days",
         "value": 14,
     },
+    {
+        "key": "notifications-reminder-minutes-before",
+        "group": "notifications",
+        "label": "تذكير العميل قبل الميعاد بـ",
+        "description": "",
+        "value_type": "minutes",
+        "value": 60,
+    },
     # Ratings (SPEC section 10)
     {
         "key": "ratings-bad-max-stars",
@@ -251,6 +259,14 @@ DEFAULT_SETTINGS = [
         "description": "التقييم ده أو أقل بيبعت تنبيه فوري للمدير.",
         "value_type": "integer",
         "value": 3,
+    },
+    {
+        "key": "google-maps-review-link",
+        "group": "ratings",
+        "label": "لينك تقييم بريق على جوجل ماب",
+        "description": "بيظهر للعميل لما يدي 5 نجوم (من غير أي مكافأة).",
+        "value_type": "text",
+        "value": "[مؤقت] لينك تقييم جوجل ماب لسه هيتحط.",
     },
     {
         "key": "ratings-reminder-after-hours",

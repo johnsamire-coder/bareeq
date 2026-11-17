@@ -42,9 +42,10 @@ class Zone(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
         # Shapes changed: every saved address may now belong to another zone.
-        from .services import recompute_address_zones
+        from .services import notify_newly_covered, recompute_address_zones
 
         recompute_address_zones()
+        notify_newly_covered()
 
 
 class Address(models.Model):

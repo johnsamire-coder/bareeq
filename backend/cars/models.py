@@ -132,4 +132,9 @@ class CustomerCar(models.Model):
         else:
             self.needs_review = True
         self.full_clean()
+        is_new = self._state.adding
         super().save(*args, **kwargs)
+        if is_new and self.needs_review:
+            from notifications.events import car_model_to_review
+
+            car_model_to_review(self)
