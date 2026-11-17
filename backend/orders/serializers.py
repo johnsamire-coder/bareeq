@@ -42,6 +42,10 @@ class OrderSerializer(serializers.ModelSerializer):
     technician_name = serializers.CharField(source="technician.full_name", read_only=True, default=None)
     zone_name = serializers.CharField(source="zone.name", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
+    is_rated = serializers.SerializerMethodField()
+
+    def get_is_rated(self, obj):
+        return hasattr(obj, "rating")
 
     class Meta:
         model = Order
@@ -49,7 +53,7 @@ class OrderSerializer(serializers.ModelSerializer):
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
                   "payment_method", "subtotal", "discount", "total", "charges_total", "amount_due", "wallet_used",
                   "amount_to_collect", "revenue", "collected", "uncollected", "items",
-                  "actual_start", "actual_end", "cancel_reason", "created_at"]
+                  "actual_start", "actual_end", "cancel_reason", "is_rated", "created_at"]
 
 
 class ManagerOrderSerializer(OrderSerializer):
