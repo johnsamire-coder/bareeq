@@ -223,7 +223,11 @@ class _JobsListState extends State<JobsList> {
                     const SizedBox(height: 4),
                     Text('${j['customer_name']} • ${j['zone_name']}'),
                     Muted(
-                      '${a['street']} عمارة ${a['building']}${'${a['landmark']}'.isNotEmpty ? ' • ${a['landmark']}' : ''}',
+                      [
+                        a['street'],
+                        'عمارة ${a['building']}',
+                        a['landmark'],
+                      ].where((x) => '${x ?? ''}'.isNotEmpty).join(' • '),
                     ),
                     const SizedBox(height: 4),
                     Text(

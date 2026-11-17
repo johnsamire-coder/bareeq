@@ -155,7 +155,11 @@ class _ManagerOrderScreenState extends State<ManagerOrderScreen> {
                 const SizedBox(height: 6),
                 Text('${o['customer_name']} • ${o['customer_phone']}'),
                 Muted(
-                  '${o['zone_name']} • ${a['street']} عمارة ${a['building']}',
+                  [
+                    o['zone_name'],
+                    a['street'],
+                    'عمارة ${a['building']}',
+                  ].where((x) => '${x ?? ''}'.isNotEmpty).join(' • '),
                 ),
                 Muted('الفني: ${o['technician_name'] ?? '-'}'),
                 if ('${o['cancel_reason'] ?? ''}'.isNotEmpty)

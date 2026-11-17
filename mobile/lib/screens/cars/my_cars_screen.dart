@@ -40,7 +40,11 @@ class _MyCarsScreenState extends State<MyCarsScreen> {
   }
 
   Future<void> _remove(Map c) async {
-    if (!await confirmDialog(context, 'تشيل العربية؟', '${c['display_name']}')) {
+    if (!await confirmDialog(
+      context,
+      'تشيل العربية؟',
+      '${c['display_name']}',
+    )) {
       return;
     }
     if (!mounted) return;

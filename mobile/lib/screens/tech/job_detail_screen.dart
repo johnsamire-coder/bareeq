@@ -286,7 +286,12 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text('${j['zone_name']} • ${a['street']}'),
+                Text(
+                  [
+                    j['zone_name'],
+                    a['street'],
+                  ].where((x) => '${x ?? ''}'.isNotEmpty).join(' • '),
+                ),
                 Text(
                   'عمارة ${a['building']}${'${a['floor']}'.isNotEmpty ? ' • دور ${a['floor']}' : ''}'
                   '${'${a['apartment']}'.isNotEmpty ? ' • شقة ${a['apartment']}' : ''}',

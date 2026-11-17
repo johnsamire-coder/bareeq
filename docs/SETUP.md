@@ -170,3 +170,32 @@ flutter test
 > لو سحبت شغل جديد من GitHub فيه مكتبة جديدة، وظهر خطأ زي `MissingPluginException`: شغّل `flutter clean` وبعدين `flutter pub get` وجرب تاني.
 
 > **الخريطة:** شاشة العنوان بتستخدم OpenStreetMap **مؤقتاً للتجربة بس**، ولازم تتبدل بخريطة جوجل قبل الإطلاق.
+
+
+### تشغيل التطبيق على موبايل أندرويد حقيقي (على اللاب توب)
+
+**أول مرة بس:**
+1. سطّب Android Studio (فوق في جدول البرامج)، وافتحه مرة عشان ينزّل الـ Android SDK، وبعدين: `flutter doctor --android-licenses` ووافق على كله.
+2. على الموبايل: الإعدادات ← عن الهاتف ← دوس على «رقم الإصدار» 7 مرات، وبعدين من «خيارات المطور» شغّل «تصحيح أخطاء USB». وصّل الموبايل باللاب توب بالكابل ووافق على الرسالة اللي هتظهر على الموبايل.
+3. اعرف عنوان اللاب توب على الشبكة: في PowerShell اكتب `ipconfig` وخد الرقم اللي جنب «IPv4 Address» (شكله زي 192.168.1.10). الموبايل واللاب توب لازم يكونوا على نفس الواي فاي.
+4. في `backend/.env` زوّد الرقم ده في `DJANGO_ALLOWED_HOSTS`، مثلاً: `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.10`
+
+**كل مرة:**
+
+PowerShell على جهازك (PS C:\) — شباك السيرفر:
+
+```powershell
+cd D:\bareeq\backend
+.\.venv\Scripts\python manage.py runserver 0.0.0.0:8000
+```
+
+(لو Windows سألك عن الـ Firewall، وافق على «Private networks».)
+
+PowerShell على جهازك (PS C:\) — شباك تاني للتطبيق (حط رقم اللاب توب مكان 192.168.1.10):
+
+```powershell
+cd D:\bareeq\mobile
+flutter run --dart-define=API_BASE=http://192.168.1.10:8000/api
+```
+
+قايمة الحاجات اللي لازم تتجرب على الموبايل: `docs/PHONE-TEST-ar.md`.

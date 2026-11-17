@@ -9,7 +9,8 @@ Future<Position?> currentPosition() async {
     if (p == LocationPermission.denied) {
       p = await Geolocator.requestPermission();
     }
-    if (p == LocationPermission.denied || p == LocationPermission.deniedForever) {
+    if (p == LocationPermission.denied ||
+        p == LocationPermission.deniedForever) {
       return null;
     }
     return await Geolocator.getCurrentPosition(
