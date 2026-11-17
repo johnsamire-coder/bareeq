@@ -38,6 +38,39 @@ DEFAULT_SETTINGS = [
         "value_type": "minutes",
         "value": 90,
     },
+    # Login with one-time code (SPEC section 2)
+    {
+        "key": "otp-code-valid-minutes",
+        "group": "login",
+        "label": "مدة صلاحية كود الدخول",
+        "description": "بعد المدة دي الكود مايشتغلش، والعميل يطلب كود جديد.",
+        "value_type": "minutes",
+        "value": 5,
+    },
+    {
+        "key": "otp-max-requests-per-phone-per-hour",
+        "group": "login",
+        "label": "أقصى عدد أكواد لنفس الرقم في الساعة",
+        "description": "",
+        "value_type": "integer",
+        "value": 5,
+    },
+    {
+        "key": "otp-max-requests-per-device-per-hour",
+        "group": "login",
+        "label": "أقصى عدد أكواد لنفس الموبايل (الجهاز) في الساعة",
+        "description": "عشان محدش يجرب أرقام كتير من نفس الجهاز.",
+        "value_type": "integer",
+        "value": 5,
+    },
+    {
+        "key": "otp-max-wrong-attempts",
+        "group": "login",
+        "label": "أقصى عدد محاولات كود غلط",
+        "description": "بعدها الكود يتقفل والعميل يطلب كود جديد.",
+        "value_type": "integer",
+        "value": 5,
+    },
     # Wallet (SPEC section 11)
     {
         "key": "wallet-max-order-share-percent",

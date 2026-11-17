@@ -60,8 +60,9 @@ class SettingValidationTests(TestCase):
 class SettingsApiTests(TestCase):
     def setUp(self):
         User = get_user_model()
-        self.staff = User.objects.create_user("manager", password="x", is_staff=True)
-        self.normal = User.objects.create_user("customer", password="x")
+        self.staff = User.objects.create_user("01000000001", "Manager", role="manager")
+        self.normal = User.objects.create_user("01000000002", "Customer")
+        self.technician = User.objects.create_user("01000000003", "Tech", role="technician")
         self.client = APIClient()
 
     def test_health_is_public(self):
@@ -69,16 +70,19 @@ class SettingsApiTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json()["database"], "ok")
 
-    def test_settings_need_staff(self):
+    def test_settings_need_manager(self):
         self.assertIn(self.client.get("/api/settings/").status_code, (401, 403))
-        self.client.force_authenticate(self.normal)
-        self.assertEqual(self.client.get("/api/settings/").status_code, 403)
+        for user in (self.normal, self.technician):
+            self.client.force_authenticate(user)
+            self.assertEqual(self.client.get("/api/settings/").status_code, 403)
 
     def test_staff_can_list_and_edit(self):
         self.client.force_authenticate(self.staff)
         r = self.client.get("/api/settings/")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(r.json()), len(DEFAULT_SETTINGS))
+        self.assertEqual(get_setting("otp-code-valid-minutes"), 5)
+        self.assertEqual(get_setting("otp-max-requests-per-phone-per-hour"), 5)
 
         r = self.client.patch("/api/settings/scheduling-buffer-minutes/", {"value": 20}, format="json")
         self.assertEqual(r.status_code, 200, r.content)
