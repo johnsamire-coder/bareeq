@@ -71,6 +71,23 @@ DEFAULT_SETTINGS = [
         "value_type": "integer",
         "value": 5,
     },
+    # Cars (SPEC section 3)
+    {
+        "key": "cars-first-year",
+        "group": "cars",
+        "label": "أقدم سنة صنع في القايمة",
+        "description": "",
+        "value_type": "integer",
+        "value": 1990,
+    },
+    {
+        "key": "cars-years-ahead",
+        "group": "cars",
+        "label": "سنين بعد السنة الحالية في القايمة",
+        "description": "1 يعني القايمة بتوصل لحد السنة الجاية.",
+        "value_type": "integer",
+        "value": 1,
+    },
     # Wallet (SPEC section 11)
     {
         "key": "wallet-max-order-share-percent",
