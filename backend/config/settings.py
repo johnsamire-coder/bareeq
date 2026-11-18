@@ -23,6 +23,10 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", required=True)
 DEBUG = env("DJANGO_DEBUG", "False").lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = [h.strip() for h in env("DJANGO_ALLOWED_HOSTS", "localhost").split(",") if h.strip()]
 
+# Test link only (scripts/demo-link.ps1): the server also serves the browser
+# version of the app from this folder, so app and API share one address.
+APP_WEB_DIR = env("APP_WEB_DIR", "")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

@@ -5,10 +5,15 @@ import 'package:http/http.dart' as http;
 
 /// Server address. Default is the server on the same computer. For a phone on
 /// the network: flutter run --dart-define=API_BASE=http://192.168.1.10:8000/api
-const apiBase = String.fromEnvironment(
+/// A path like /api means "the same address the app was opened from" (the
+/// browser version served by the server itself, e.g. the client's test link).
+const _apiBaseSetting = String.fromEnvironment(
   'API_BASE',
   defaultValue: 'http://localhost:8000/api',
 );
+final apiBase = _apiBaseSetting.startsWith('/')
+    ? Uri.base.resolve(_apiBaseSetting).toString()
+    : _apiBaseSetting;
 
 /// An error the server explained: `code` (stable name) and `message` (Arabic).
 class ApiError implements Exception {

@@ -1,5 +1,9 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 
 from core import views
@@ -26,3 +30,11 @@ urlpatterns = [
     path("api/", include("reports.urls")),
     path("api/", include("orders.urls")),
 ]
+
+if settings.APP_WEB_DIR:
+    # The browser version of the app at "/" (test link only; never on the real server).
+    _web = Path(settings.APP_WEB_DIR)
+    urlpatterns += [
+        path("", serve, {"document_root": _web, "path": "index.html"}),
+        re_path(r"^(?!api/|admin/)(?P<path>.+)$", serve, {"document_root": _web}),
+    ]
