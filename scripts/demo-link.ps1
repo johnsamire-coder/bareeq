@@ -33,15 +33,31 @@ if ($Rebuild -or -not (Test-Path (Join-Path $web "index.html"))) {
     Pop-Location
 }
 
-# 3) the server, in its own window (login codes also show there)
+# 3) the server, in its own window (login codes and any errors show there)
 $env:DJANGO_DEBUG = "False"
 $env:DJANGO_ALLOWED_HOSTS = "localhost,127.0.0.1,.trycloudflare.com"
 $env:APP_WEB_DIR = $web
 Push-Location $backend
 & .\.venv\Scripts\python.exe manage.py migrate --noinput
-$server = Start-Process -PassThru -WorkingDirectory $backend -FilePath (Join-Path $backend ".venv\Scripts\python.exe") `
-    -ArgumentList "manage.py", "runserver", "127.0.0.1:8000", "--noreload", "--insecure"
 Pop-Location
+# The server runs in its own PowerShell window that stays open, so any error stays visible.
+$serverCmd = "cd '$backend'; .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000 --noreload --insecure"
+$server = Start-Process -PassThru -FilePath "powershell.exe" -ArgumentList "-NoExit", "-Command", $serverCmd
+
+# Wait until the server answers before opening the link.
+$up = $false
+for ($i = 0; $i -lt 30 -and -not $up; $i++) {
+    Start-Sleep -Seconds 1
+    try {
+        $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 3 "http://127.0.0.1:8000/api/health/"
+        if ($r.StatusCode -eq 200) { $up = $true }
+    } catch { }
+}
+if (-not $up) {
+    Write-Host "The server did not start. Look at the server window and send its text to Claude." -ForegroundColor Red
+    exit 1
+}
+Write-Host "Server is running." -ForegroundColor Green
 
 # 4) the public link
 $log = Join-Path $env:TEMP "bareeq-tunnel.log"
@@ -68,6 +84,8 @@ Write-Host " Test link (copied, paste it to the client):" -ForegroundColor Green
 Write-Host " $url" -ForegroundColor Yellow
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host "Keep this window open. Press Enter here to stop the link."
+Write-Host "Do NOT close the server window either."
 Read-Host | Out-Null
+Get-CimInstance Win32_Process -Filter "ParentProcessId=$($server.Id)" | ForEach-Object { Stop-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }
 Stop-Process -Id $server.Id, $tunnel.Id -ErrorAction SilentlyContinue
 Write-Host "Stopped."
