@@ -24,6 +24,14 @@ if (-not $cf) {
     exit 1
 }
 
+# Old runs: close an old link, and stop if an old server window is still open.
+Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+try {
+    Invoke-WebRequest -UseBasicParsing -TimeoutSec 3 "http://127.0.0.1:8000/api/health/" | Out-Null
+    Write-Host "An old server is still running. Close all the old PowerShell windows, then run this again." -ForegroundColor Red
+    exit 1
+} catch { }
+
 # 2) the browser version of the app (talks to the same address it is opened from)
 if ($Rebuild -or -not (Test-Path (Join-Path $web "index.html"))) {
     Write-Host "Building the app (a few minutes the first time)..." -ForegroundColor Cyan
@@ -60,8 +68,7 @@ if (-not $up) {
 Write-Host "Server is running." -ForegroundColor Green
 
 # 4) the public link
-$log = Join-Path $env:TEMP "bareeq-tunnel.log"
-if (Test-Path $log) { Remove-Item $log }
+$log = Join-Path $env:TEMP ("bareeq-tunnel-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".log")
 $tunnel = Start-Process -PassThru -WindowStyle Hidden -FilePath $cf `
     -ArgumentList "tunnel", "--no-autoupdate", "--url", "http://127.0.0.1:8000" -RedirectStandardError $log
 $url = $null
