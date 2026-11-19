@@ -57,6 +57,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         "نوع الجهاز وقت التسجيل", max_length=10, choices=DeviceType.choices, default=DeviceType.UNKNOWN
     )
     referral_code_entered = models.CharField("كود الإحالة اللي كتبه", max_length=30, blank=True)
+    # The customer's own code to invite friends (loyalty/referral.py), made when first needed.
+    referral_code = models.CharField("كود الدعوة بتاعه", max_length=20, unique=True, null=True, blank=True)
     heard_about = models.ForeignKey(
         "accounts.HeardAboutOption",
         verbose_name="عرفنا منين",

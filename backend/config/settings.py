@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "feedback",
     "coupons",
     "reports",
+    "loyalty",
 ]
 
 MIDDLEWARE = [

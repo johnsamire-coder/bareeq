@@ -63,8 +63,13 @@ def day_closed(order, reason):
 
 
 def wallet_credit(entry):
-    notify(entry.customer, "wallet_credit", "رصيد جديد في محفظتك",
-           f"اتضاف {entry.amount / 100:g} جنيه لمحفظتك.", {"wallet_entry": entry.id})
+    pounds = f"{entry.amount / 100:g}"
+    title, body = "رصيد جديد في محفظتك", f"اتضاف {pounds} جنيه لمحفظتك."
+    if entry.kind == "cashback":
+        title, body = "نزلك كاش باك", f"اتضاف {pounds} جنيه كاش باك من طلبك لمحفظتك."
+    elif entry.kind == "referral":
+        title, body = "صاحبك جرّب بريق", f"صاحبك خلص أول غسلة، ونزلك {pounds} جنيه في محفظتك. شكراً إنك عرّفته علينا."
+    notify(entry.customer, "wallet_credit", title, body, {"wallet_entry": entry.id})
 
 
 def wallet_expiring(entry):
@@ -98,3 +103,21 @@ def bad_rating(rating):
 def damage_report(report):
     notify_managers("damage_report", "بلاغ ضرر", f"طلب {report.order_id}: {report.description[:200]}",
                     {"order": report.order_id, "damage_report": report.id})
+
+
+def wash_card_one_left(customer, percent, order):
+    notify(customer, "wash_card", "فاضلك طلب واحد",
+           f"اطلب مرة كمان، والطلب اللي بعده عليه خصم {percent}% من كارت الغسيل.",
+           {"action": "book"}, dedupe_key=f"wash-card-one-left:{order.id}")
+
+
+def wash_card_ready(customer, percent, order):
+    text = "ببلاش" if percent >= 100 else f"عليه خصم {percent}%"
+    notify(customer, "wash_card", "طلبك الجاي " + text,
+           f"كمّلت كارت الغسيل. طلبك الجاي {text} على الخدمات.",
+           {"action": "book"}, dedupe_key=f"wash-card-ready:{order.id}")
+
+
+def winback(customer, last_order):
+    notify(customer, "winback", "وحشتنا", "بقالك فترة مغسلتش عربيتك معانا. احجز غسلتك الجاية في دقيقة.",
+           {"action": "book"}, dedupe_key=f"winback:{last_order.id}")

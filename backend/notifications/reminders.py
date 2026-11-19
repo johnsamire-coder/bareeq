@@ -56,3 +56,19 @@ def wallet_expiry_reminders():
         events.wallet_expiring(e)
         n += 1
     return n
+
+
+def winback_reminders():
+    """«وحشتنا»: the last completed order is older than the setting and nothing is booked."""
+    now = timezone.now()
+    cutoff = now - timedelta(days=get_setting("winback-after-days"))
+    busy = Order.blocking().filter(scheduled_start__gt=now).values("customer")
+    last = (Order.objects.filter(status=Order.Status.COMPLETED).exclude(customer__in=busy)
+            .values("customer").annotate(last_end=Max("actual_end")).filter(last_end__lte=cutoff))
+    n = 0
+    for row in last:
+        order = Order.objects.filter(customer=row["customer"], status=Order.Status.COMPLETED,
+                                     actual_end=row["last_end"]).select_related("customer").first()
+        events.winback(order.customer, order)
+        n += 1
+    return n

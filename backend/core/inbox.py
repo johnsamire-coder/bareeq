@@ -12,6 +12,7 @@ from core.services import get_setting
 def manager_inbox(request):
     from cars.models import CustomerCar
     from feedback.models import DamageReport, Rating
+    from loyalty.models import Referral
     from orders.models import Order
     from payments.models import DailyClosing, Payment
     from places.models import AreaRequest
@@ -27,6 +28,7 @@ def manager_inbox(request):
         "damage_reports": DamageReport.objects.filter(status="open").count(),
         "car_models_to_review": CustomerCar.objects.filter(needs_review=True, is_active=True).count(),
         "notify_me_requests": AreaRequest.objects.filter(notified_at__isnull=True).count(),
+        "referrals_to_review": Referral.objects.filter(status="review").count(),
         "orders_today": Order.objects.filter(scheduled_start__gte=start, scheduled_start__lt=end)
         .exclude(status__in=["expired"]).count(),
     })

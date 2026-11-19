@@ -20,4 +20,5 @@ class InboxTests(TestCase):
         self.assertEqual(r["car_models_to_review"], 1)
         self.assertEqual(r["instapay_to_review"], 0)
         self.assertEqual(set(r), {"instapay_to_review", "refunds_due", "closings_to_confirm", "bad_ratings",
-                                  "damage_reports", "car_models_to_review", "notify_me_requests", "orders_today"})
+                                  "damage_reports", "car_models_to_review", "notify_me_requests", "referrals_to_review",
+                                  "orders_today"})

@@ -96,6 +96,10 @@ def review_instapay(payment, manager, approve, reason=""):
     payment.reviewed_at = timezone.now()
     payment.review_reason = (reason or "").strip()[:300]
     payment.save()
+    if approve:
+        from loyalty.rewards import on_payment_confirmed
+
+        on_payment_confirmed(payment.order)
     return payment
 
 

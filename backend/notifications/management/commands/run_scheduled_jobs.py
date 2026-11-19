@@ -17,6 +17,7 @@ class Command(BaseCommand):
             "rating_reminders": reminders.rating_reminders(),
             "next_wash_reminders": reminders.next_wash_reminders(),
             "wallet_expiry_reminders": reminders.wallet_expiry_reminders(),
+            "winback_reminders": reminders.winback_reminders(),
         }
         if options["verbosity"]:
             self.stdout.write(", ".join(f"{k}: {v}" for k, v in done.items()))

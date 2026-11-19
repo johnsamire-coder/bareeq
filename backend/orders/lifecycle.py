@@ -88,6 +88,9 @@ def _after_completion(order, technician, cash_collected):
     record_cash(order, technician, cash_collected)
     issue_invoice(order)
     job_done(order)
+    from loyalty.rewards import on_completed
+
+    on_completed(order)
 
 
 def _not_happening(order):

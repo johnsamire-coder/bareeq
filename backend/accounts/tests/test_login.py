@@ -53,7 +53,8 @@ class LoginApiTests(TestCase):
         self.assertEqual(r.json()["code"], "signup_required")
 
         heard = HeardAboutOption.objects.first()
-        r = self.verify(code, **self.signup_data(), referral_code="ABC123", heard_about=heard.id)
+        User.objects.create_user("01099999999", "Friend", referral_code="ABC123")  # a real invite code
+        r = self.verify(code, **self.signup_data(), referral_code="abc123", heard_about=heard.id)
         self.assertEqual(r.status_code, 200, r.content)
         body = r.json()
         self.assertTrue(body["is_new"])
@@ -63,7 +64,7 @@ class LoginApiTests(TestCase):
         user = User.objects.get(phone="+201012345678")
         self.assertEqual(user.full_name, "أحمد علي")
         self.assertEqual(user.signup_device_type, "android")
-        self.assertEqual(user.referral_code_entered, "ABC123")
+        self.assertEqual(user.referral_code_entered, "abc123")
         self.assertEqual(user.heard_about, heard)
         self.assertFalse(user.has_usable_password())
         acc = TermsAcceptance.objects.get(user=user)

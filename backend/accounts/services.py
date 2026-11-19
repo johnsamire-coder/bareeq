@@ -109,6 +109,13 @@ def _finish_login(phone, otp, signup):
             raise OtpError("terms_not_published", "التسجيل مقفول مؤقتاً. جرب كمان شوية.", status=503)
         if int(terms_version) != current.version:
             raise OtpError("terms_outdated", "الشروط اتحدثت. اقرا النسخة الجديدة ووافق عليها.")
+        from core.services import get_setting
+        from loyalty.referral import find_referrer
+
+        ref_code = (signup.get("referral_code") or "").strip()
+        if ref_code and get_setting("referral-enabled") and find_referrer(ref_code) is None:
+            # Do not use up the code: the customer fixes the invite code and tries again.
+            raise OtpError("referral_code_invalid", "كود الدعوة ده مش صحيح. صححه أو سيبه فاضي.")
         user = User.objects.create_user(
             phone,
             full_name=full_name,
@@ -118,6 +125,9 @@ def _finish_login(phone, otp, signup):
             heard_about=signup.get("heard_about"),
         )
         TermsAcceptance.objects.create(user=user, terms_version=current)
+        from loyalty.referral import on_signup
+
+        on_signup(user, ref_code, otp.device_id)
         from notifications.events import welcome
 
         welcome(user)

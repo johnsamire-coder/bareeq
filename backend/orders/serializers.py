@@ -49,6 +49,24 @@ class OrderSerializer(serializers.ModelSerializer):
     coupon_code = serializers.SerializerMethodField()
     extra_discount_label = serializers.CharField(source="get_extra_discount_kind_display", read_only=True)
 
+    cashback_percent = serializers.SerializerMethodField()
+    cashback_amount = serializers.SerializerMethodField()
+    refund_option = serializers.SerializerMethodField()
+
+    def get_cashback_percent(self, obj):
+        """Shown before confirming: «هترجعلك X% كاش باك» (0 when cashback is off)."""
+        from core.services import get_setting
+
+        return get_setting("cashback-percent") if get_setting("cashback-enabled") else 0
+
+    def get_cashback_amount(self, obj):
+        return sum(e.amount for e in obj.wallet_entries.filter(kind="cashback"))
+
+    def get_refund_option(self, obj):
+        from loyalty.refunds import wallet_option
+
+        return wallet_option(obj) if obj.status.startswith("cancelled") or obj.status == "car_not_found" else None
+
     def get_coupon_code(self, obj):
         use = getattr(obj, "coupon_use", None)
         return use.coupon.code if use else None
@@ -61,7 +79,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ["id", "status", "status_label", "scheduled_start", "scheduled_end", "total_minutes",
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
                   "payment_method", "subtotal", "discount", "total", "extra_discount_kind", "extra_discount",
-                  "extra_discount_label", "coupon_code", "charges_total",
+                  "extra_discount_label", "coupon_code", "cashback_percent", "cashback_amount", "refund_option", "charges_total",
                   "amount_due", "wallet_used",
                   "amount_to_collect", "revenue", "collected", "uncollected", "items",
                   "actual_start", "actual_end", "cancel_reason", "is_rated", "created_at"]

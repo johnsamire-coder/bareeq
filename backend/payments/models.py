@@ -58,6 +58,7 @@ class Payment(models.Model):
         COLLECTED = "collected", "الفني استلمه"
         REFUND_DUE = "refund_due", "لازم يترجع للعميل"
         REFUNDED = "refunded", "اترجع"
+        REFUNDED_TO_WALLET = "refunded_to_wallet", "دخل المحفظة"
 
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="payments")
     method = models.CharField(max_length=20, choices=Method.choices)
