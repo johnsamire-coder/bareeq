@@ -14,5 +14,12 @@ def terms_v2_text():
     return (_HERE / "terms_v2_ar.md").read_text(encoding="utf-8")
 
 
+def terms_v3_text():
+    """v3 (phase 2): rewards and discounts: one discount per order, wallet, cashback,
+    invite a friend, wash card, InstaPay refund into the wallet. No fixed numbers:
+    they show in the app and the manager may change them."""
+    return (_HERE / "terms_v3_ar.md").read_text(encoding="utf-8")
+
+
 def latest_terms_text():
-    return terms_v2_text()
+    return terms_v3_text()
