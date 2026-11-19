@@ -46,13 +46,17 @@ def issue_invoice(order):
         "charges": [{"label": c.get_kind_display(), "amount": c.amount, "source_order": c.source_order_id}
                     for c in order.applied_charges.filter(waived_at__isnull=True)],
     }
-    use = getattr(order, "coupon_use", None)
-    if use is not None:
-        lines["coupon"] = {"code": use.coupon.code, "discount": use.discount}
+    if order.extra_discount:
+        from orders.discounts import LABELS
+
+        use = getattr(order, "coupon_use", None)
+        lines["extra_discount"] = {"kind": order.extra_discount_kind, "label": LABELS[order.extra_discount_kind],
+                                   "code": use.coupon.code if order.extra_discount_kind == "coupon" and use else None,
+                                   "discount": order.extra_discount}
     oil = sum((i.quote.get("oil") or {}).get("price", 0) for i in items)
     return Invoice.objects.create(
         order=order, number=f"BR-{year}-{seq:06d}", year=year, sequence=seq, issued_at=now, lines=lines,
-        subtotal=order.subtotal - oil, discount=order.discount + order.coupon_discount + order.rounding, oil_total=oil,
+        subtotal=order.subtotal - oil, discount=order.discount + order.extra_discount + order.rounding, oil_total=oil,
         charges_total=order.charges_total,
         total=order.amount_due, wallet_amount=order.wallet_used,
         instapay_amount=_paid(order, Payment.Method.INSTAPAY, [Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]),

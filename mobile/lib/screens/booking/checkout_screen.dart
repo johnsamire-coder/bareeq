@@ -91,7 +91,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
     setState(() => o = Map<String, dynamic>.from(r));
     if (mounted) {
-      showInfo(context, 'الكود اتطبق: خصم ${money(o['coupon_discount'])}');
+      showInfo(context, 'الكود اتطبق: خصم ${money(o['extra_discount'])}');
     }
   }
 
@@ -189,10 +189,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       '- ${money(o['discount'])}',
                       color: BrandColors.good,
                     ),
-                  if ((o['coupon_discount'] as int) > 0)
+                  if ((o['extra_discount'] as int) > 0)
                     KeyValue(
-                      'كود ${o['coupon_code']}',
-                      '- ${money(o['coupon_discount'])}',
+                      extraDiscountTitle(o),
+                      '- ${money(o['extra_discount'])}',
                       color: BrandColors.good,
                     ),
                   if ((o['charges_total'] as int) > 0)
@@ -208,6 +208,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           const SectionTitle('كود خصم'),
+          const Muted('الطلب بياخد خصم واحد بس جنب خصم الباقة: الأكبر.'),
           if (o['coupon_code'] == null)
             Row(
               children: [
@@ -244,7 +245,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.right,
                 ),
-                subtitle: Text('خصم ${money(o['coupon_discount'])}'),
+                subtitle: Text('خصم ${money(o['extra_discount'])}'),
                 trailing: TextButton(
                   onPressed: _removeCoupon,
                   child: const Text('شيله'),

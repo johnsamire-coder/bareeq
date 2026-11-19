@@ -50,7 +50,7 @@ class CouponTests(TestCase):
         coupon()
         o = self.apply(" launch20 ")  # any case, spaces ignored
         # 20% of 243 = 48.60 -> discount rounded DOWN to 48 -> pays 195
-        self.assertEqual((o.coupon_discount, o.amount_due), (4800, 19500))
+        self.assertEqual((o.extra_discount, o.amount_due), (4800, 19500))
         self.assertEqual(o.amount_due % 100, 0)
 
     def test_fixed_amount_and_never_more_than_services(self):
@@ -68,7 +68,7 @@ class CouponTests(TestCase):
         self.assertEqual(self.code_of(lambda: self.apply("OLD")), "coupon_expired")
         self.assertEqual(self.code_of(lambda: self.apply("OFF")), "coupon_invalid")
         self.assertEqual(self.code_of(lambda: self.apply("OBOUR")), "coupon_wrong_zone")
-        self.assertEqual(self.apply("NASR").coupon_discount, 4800)
+        self.assertEqual(self.apply("NASR").extra_discount, 4800)
 
     def test_per_customer_limit_and_cancelled_orders_do_not_count(self):
         coupon(max_uses_per_customer=1)
@@ -79,7 +79,7 @@ class CouponTests(TestCase):
         self.assertEqual(self.code_of(lambda: self.apply("LAUNCH20", order=second)), "coupon_already_used")
         with frozen_now(NOW):
             cancel_by_customer(self.order)  # free (more than 2 hours before)
-        self.assertEqual(self.apply("LAUNCH20", order=second).coupon_discount, 4800)
+        self.assertEqual(self.apply("LAUNCH20", order=second).extra_discount, 4800)
 
     def test_total_limit_for_everyone(self):
         coupon(max_uses_total=1)
@@ -99,7 +99,7 @@ class CouponTests(TestCase):
         other, ocar, oaddr = make_customer("01012345670")
         o2 = book(other, ocar, oaddr, cairo(WED, 14))
         with frozen_now(NOW + timedelta(minutes=11)):  # hold of the first order expired
-            self.assertEqual(apply_coupon(o2, other, "LAUNCH20").coupon_discount, 4800)
+            self.assertEqual(apply_coupon(o2, other, "LAUNCH20").extra_discount, 4800)
 
     def test_confirm_rechecks_the_limit(self):
         coupon(max_uses_total=1)
@@ -118,7 +118,7 @@ class CouponTests(TestCase):
         self.apply("LAUNCH20")
         with frozen_now(NOW):
             o = remove_coupon(self.order, self.customer)
-        self.assertEqual((o.coupon_discount, o.amount_due), (0, 24300))
+        self.assertEqual((o.extra_discount, o.amount_due), (0, 24300))
 
     def test_only_pending_orders_and_own_order(self):
         coupon()
@@ -144,4 +144,5 @@ class CouponTests(TestCase):
             complete_job(o, self.tech, cash_collected=o.amount_to_collect)
         inv = Invoice.objects.get()
         self.assertEqual((inv.total, inv.discount), (19500, 2700 + 4800))
-        self.assertEqual(inv.lines["coupon"], {"code": "LAUNCH20", "discount": 4800})
+        self.assertEqual(inv.lines["extra_discount"],
+                         {"kind": "coupon", "label": "كوبون", "code": "LAUNCH20", "discount": 4800})

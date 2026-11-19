@@ -2,7 +2,7 @@
 customer signs up -> car + address -> quote -> slots -> booking -> coupon ->
 wallet + InstaPay -> manager approves -> technician job with 8 photos ->
 invoice -> rating -> technician closing -> manager confirms -> reports."""
-from datetime import timedelta
+from datetime import date, timedelta
 from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -118,7 +118,9 @@ class FullJourneyTests(TestCase):
 
             # 9. Reports show it.
             # From the booking day (the rating is stamped with the real clock) to Wednesday.
-            rep = mgr.get("/api/manage/reports/", {"from": T.date().isoformat(), "to": WED.isoformat()}).json()
+            # Up to today at least, so the test keeps passing on any real date.
+            to = max(WED, date.today())
+            rep = mgr.get("/api/manage/reports/", {"from": T.date().isoformat(), "to": to.isoformat()}).json()
             t = rep["totals"]
             self.assertEqual((t["orders"], t["revenue"], t["collected"], t["wallet"], t["uncollected"]), (1, 21900, 18900, 3000, 0))
             self.assertEqual(rep["ratings"]["average"], 5.0)

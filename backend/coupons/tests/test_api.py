@@ -33,7 +33,7 @@ class CouponApiTests(TestCase):
         with frozen_now(START - timedelta(days=1)):
             r = self.c.post(f"/api/orders/{order.id}/coupon/", {"code": "LAUNCH20"}, format="json")
             self.assertEqual(r.status_code, 200, r.content)
-            self.assertEqual((r.json()["coupon_code"], r.json()["coupon_discount"], r.json()["amount_due"]), ("LAUNCH20", 4800, 19500))
+            self.assertEqual((r.json()["coupon_code"], r.json()["extra_discount"], r.json()["amount_due"]), ("LAUNCH20", 4800, 19500))
             r = self.c.post(f"/api/orders/{order.id}/coupon/", {"code": "WRONG"}, format="json")
             self.assertEqual(r.json()["code"], "coupon_invalid")
             r = self.c.delete(f"/api/orders/{order.id}/coupon/")

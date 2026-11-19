@@ -47,6 +47,7 @@ class OrderSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     is_rated = serializers.SerializerMethodField()
     coupon_code = serializers.SerializerMethodField()
+    extra_discount_label = serializers.CharField(source="get_extra_discount_kind_display", read_only=True)
 
     def get_coupon_code(self, obj):
         use = getattr(obj, "coupon_use", None)
@@ -59,7 +60,8 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["id", "status", "status_label", "scheduled_start", "scheduled_end", "total_minutes",
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
-                  "payment_method", "subtotal", "discount", "total", "coupon_discount", "coupon_code", "charges_total",
+                  "payment_method", "subtotal", "discount", "total", "extra_discount_kind", "extra_discount",
+                  "extra_discount_label", "coupon_code", "charges_total",
                   "amount_due", "wallet_used",
                   "amount_to_collect", "revenue", "collected", "uncollected", "items",
                   "actual_start", "actual_end", "cancel_reason", "is_rated", "created_at"]

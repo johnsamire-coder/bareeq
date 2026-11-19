@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from core.errors import BusinessError
 from core.money import whole_pound_discount
+from orders import discounts
 from orders.models import Order
 
 from .models import Coupon, CouponUse
@@ -54,8 +55,14 @@ def apply_coupon(order, customer, code):
     discount = coupon_discount(coupon, order)
     CouponUse.objects.update_or_create(order=order, defaults={"coupon": coupon, "customer": customer,
                                                               "discount": discount})
-    order.coupon_discount = discount
-    order.save(update_fields=["coupon_discount", "updated_at"])
+    discounts.refresh(order)
+    if order.extra_discount_kind != "coupon":
+        # Only one extra discount per order, and the other one is bigger.
+        # Raising undoes the coupon (the whole function is one transaction).
+        raise BusinessError(
+            "better_discount",
+            f"عندك خصم أكبر ({discounts.LABELS[order.extra_discount_kind]}: {order.extra_discount // 100} جنيه)، "
+            "فالكود مش هيتطبق. الطلب بياخد خصم واحد بس، الأكبر.")
     return order
 
 
@@ -67,9 +74,7 @@ def remove_coupon(order, customer):
     if order.status != S.PENDING_PAYMENT:
         raise BusinessError("not_pending", "الكود بيتشال قبل تأكيد الحجز بس.")
     CouponUse.objects.filter(order=order).delete()
-    order.coupon_discount = 0
-    order.save(update_fields=["coupon_discount", "updated_at"])
-    return order
+    return discounts.refresh(order)
 
 
 def recheck_on_confirm(order):

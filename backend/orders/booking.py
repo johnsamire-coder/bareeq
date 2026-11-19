@@ -169,6 +169,9 @@ def create_order(customer, address_id, items, start):
         OrderItem.objects.create(order=order, car=car, size_class=car.size_class, quote=q,
                                  minutes=q["total_minutes"], total=q["total"])
     attach_to_order(order)
+    from .discounts import refresh
+
+    refresh(order)
     return order
 
 

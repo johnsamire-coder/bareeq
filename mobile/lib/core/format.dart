@@ -56,3 +56,8 @@ String duration(int minutes) {
   if (h == 0) return '$m دقيقة';
   return '$hours و $m دقيقة';
 }
+
+/// "كود BAREEQ20" for a coupon, else the kind's name (كارت الغسيل، ...).
+String extraDiscountTitle(Map o) => o['extra_discount_kind'] == 'coupon'
+    ? 'كود ${o['coupon_code']}'
+    : '${o['extra_discount_label']}';

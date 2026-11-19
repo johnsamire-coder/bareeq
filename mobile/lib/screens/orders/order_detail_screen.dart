@@ -171,10 +171,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     '- ${money(o['discount'])}',
                     color: BrandColors.good,
                   ),
-                if ((o['coupon_discount'] as int) > 0)
+                if ((o['extra_discount'] as int) > 0)
                   KeyValue(
-                    'كود ${o['coupon_code']}',
-                    '- ${money(o['coupon_discount'])}',
+                    extraDiscountTitle(o),
+                    '- ${money(o['extra_discount'])}',
                     color: BrandColors.good,
                   ),
                 if ((o['charges_total'] as int) > 0)

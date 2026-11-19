@@ -16,8 +16,28 @@ from .models import Payment
 METHODS = (Payment.Method.CASH, Payment.Method.INSTAPAY)
 
 
-@transaction.atomic
 def confirm_with_payment(order, method, wallet_amount=0, proof_file=None):
+    # The extra discount may have changed since the customer saw the price
+    # (only one per order, the biggest). Save the new one first, then ask the
+    # customer to look again instead of charging a different amount silently.
+    if _refresh_discount(order):
+        raise BusinessError("discount_changed", "الخصم على الطلب اتغير. راجع المبلغ الجديد وأكد تاني.", status=409)
+    return _confirm(order, method, wallet_amount, proof_file)
+
+
+@transaction.atomic
+def _refresh_discount(order):
+    from orders import discounts
+
+    order = Order.objects.select_for_update().get(pk=order.pk)
+    if order.status != Order.Status.PENDING_PAYMENT:
+        return False
+    before = order.amount_due
+    return discounts.refresh(order).amount_due != before
+
+
+@transaction.atomic
+def _confirm(order, method, wallet_amount=0, proof_file=None):
     order = Order.objects.select_for_update().get(pk=order.pk)
     if method not in METHODS:
         raise BusinessError("payment_method_not_available", "طريقة الدفع دي مش متاحة.")

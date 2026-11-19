@@ -18,6 +18,7 @@ const groupNames = {
   'photos': 'الصور',
   'payments': 'الدفع',
   'wallet': 'المحفظة',
+  'loyalty': 'الولاء والمكافآت',
   'notifications': 'الإشعارات',
   'ratings': 'التقييم',
 };
