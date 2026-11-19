@@ -15,10 +15,14 @@ class SlotsScreen extends StatefulWidget {
     required this.addressId,
     required this.items,
     this.rescheduleOrderId,
+    this.pickLabel,
   });
   final int addressId;
   final List<Map<String, dynamic>> items;
   final int? rescheduleOrderId;
+
+  /// Only choose a time and return it (subscriptions); the button says this.
+  final String? pickLabel;
 
   @override
   State<SlotsScreen> createState() => _SlotsScreenState();
@@ -59,6 +63,10 @@ class _SlotsScreenState extends State<SlotsScreen> {
   }
 
   Future<void> _book() async {
+    if (widget.pickLabel != null) {
+      Navigator.pop(context, _start);
+      return;
+    }
     final api = context.read<Session>().api;
     if (widget.rescheduleOrderId != null) {
       await api.post('orders/${widget.rescheduleOrderId}/reschedule/', {
@@ -103,9 +111,11 @@ class _SlotsScreenState extends State<SlotsScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: BusyButton(
-                  label: widget.rescheduleOrderId != null
-                      ? 'غيّر الميعاد'
-                      : 'احجز الميعاد',
+                  label:
+                      widget.pickLabel ??
+                      (widget.rescheduleOrderId != null
+                          ? 'غيّر الميعاد'
+                          : 'احجز الميعاد'),
                   onPressed: _start == null ? null : _book,
                 ),
               ),

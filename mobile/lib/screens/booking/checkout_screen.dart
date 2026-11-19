@@ -10,6 +10,7 @@ import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
 import 'booked_screen.dart';
+import 'pay_online_screen.dart';
 
 /// Booking step 4: the time is held for a few minutes while the customer pays.
 /// Cash to the technician, or InstaPay with the transfer screenshot; up to the
@@ -104,6 +105,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _confirm() async {
     final api = context.read<Session>().api;
+    if (_method == 'card') {
+      final p = await api.post('orders/${o['id']}/pay-online/', {
+        'wallet_amount': _wallet,
+      });
+      if (!mounted) return;
+      final paid = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              PayOnlineScreen(payment: Map<String, dynamic>.from(p)),
+        ),
+      );
+      final fresh = await api.get('orders/${o['id']}/');
+      if (!mounted) return;
+      setState(() => o = Map<String, dynamic>.from(fresh));
+      _tick();
+      if (paid == true) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => BookedScreen(order: o)),
+          (r) => r.isFirst,
+        );
+      }
+      return;
+    }
     final path = 'orders/${o['id']}/confirm/';
     final order = _method == 'instapay'
         ? await api.upload(
@@ -132,7 +157,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final mm = _left.inMinutes.toString(),
         ss = (_left.inSeconds % 60).toString().padLeft(2, '0');
     final due = o['amount_due'] as int;
-    final ready = !expired && (_method == 'cash' || _proof != null);
+    final ready =
+        !expired && (_method == 'cash' || _method == 'card' || _proof != null);
     return Scaffold(
       appBar: AppBar(title: const Text('الدفع')),
       body: ListView(
@@ -285,15 +311,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: RadioGroup<String>(
               groupValue: _method,
               onChanged: (v) => setState(() => _method = v!),
-              child: const Column(
+              child: Column(
                 children: [
-                  RadioListTile<String>(
+                  const RadioListTile<String>(
                     value: 'cash',
                     title: Text('كاش للفني'),
                     subtitle: Text('بتدفع لما الشغل يخلص'),
                   ),
-                  Divider(height: 1, color: BrandColors.line),
-                  RadioListTile<String>(
+                  if (_info?['card_payment_enabled'] == true) ...[
+                    const Divider(height: 1, color: BrandColors.line),
+                    const RadioListTile<String>(
+                      value: 'card',
+                      title: Text('كارت أو محفظة موبايل'),
+                      subtitle: Text('فيزا، ماستركارد، فودافون كاش...'),
+                    ),
+                  ],
+                  const Divider(height: 1, color: BrandColors.line),
+                  const RadioListTile<String>(
                     value: 'instapay',
                     title: Text('InstaPay'),
                     subtitle: Text('حوّل وارفع صورة التحويل'),
@@ -335,7 +369,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
           const SizedBox(height: 12),
           KeyValue(
-            _method == 'cash' ? 'هتدفع للفني' : 'هتحوّل',
+            _method == 'cash'
+                ? 'هتدفع للفني'
+                : (_method == 'card' ? 'هتدفع بالكارت' : 'هتحوّل'),
             money(due - _wallet),
             bold: true,
           ),

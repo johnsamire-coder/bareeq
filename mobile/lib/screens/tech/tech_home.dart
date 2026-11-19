@@ -221,6 +221,11 @@ class _JobsListState extends State<JobsList> {
                       ],
                     ),
                     const SizedBox(height: 4),
+                    if (j['subscription_period'] != null)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Pill('اشتراك'),
+                      ),
                     Text('${j['customer_name']} • ${j['zone_name']}'),
                     Muted(
                       [

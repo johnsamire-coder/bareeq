@@ -4,6 +4,7 @@ import '../../widgets/common.dart';
 import 'cars_catalog_screen.dart';
 import 'close_day_screen.dart';
 import 'custody_screen.dart';
+import 'subscriptions_admin_screen.dart';
 import 'wallet_report_screen.dart';
 import 'customers_screen.dart';
 import 'reports_screen.dart';
@@ -50,6 +51,12 @@ class AdminMenu extends StatelessWidget {
           'العملاء',
           'ملف كل عميل، المحفظة، الرسوم، الملاحظات',
           () => const CustomersScreen(),
+        ),
+        item(
+          Icons.event_repeat,
+          'الاشتراكات',
+          'المشتركين، وإيراد الاشتراكات كل شهر',
+          () => const SubscriptionsAdminScreen(),
         ),
         item(
           Icons.savings_outlined,
@@ -106,6 +113,12 @@ class AdminMenu extends StatelessWidget {
           'الخدمات',
           'الأسماء، الضل، مين بيلغي مين',
           servicesScreen,
+        ),
+        item(
+          Icons.event_repeat,
+          'باقات الاشتراك',
+          'عدد الغسلات، والخدمات، ونسبة الخصم',
+          subscriptionPlansScreen,
         ),
         item(
           Icons.workspaces_outline,

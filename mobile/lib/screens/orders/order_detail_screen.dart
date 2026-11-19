@@ -172,6 +172,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 6),
+                if (o['subscription_period'] != null)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Pill('زيارة اشتراك'),
+                  ),
                 Muted(
                   'الفني: ${o['technician_name'] ?? '-'} • ${o['zone_name']} • حوالي ${duration(o['total_minutes'] as int)}',
                 ),
@@ -182,6 +187,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         ),
         if (o['refund_option'] != null) _refundCard(o['refund_option'] as Map),
+        if (((o['card_refund_due'] ?? 0) as int) > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: BusyButton(
+              label: 'رجّعها للكارت (${money(o['card_refund_due'])})',
+              outlined: true,
+              icon: Icons.credit_card,
+              onPressed: () async {
+                await _api.post('orders/${widget.orderId}/refund-to-card/');
+                if (mounted) {
+                  showInfo(
+                    context,
+                    'الفلوس راجعة للكارت. ممكن تاخد كام يوم حسب البنك.',
+                  );
+                }
+                _load();
+              },
+            ),
+          ),
         const SectionTitle('التفاصيل'),
         Card(
           child: Padding(

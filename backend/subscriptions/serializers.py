@@ -57,6 +57,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     technician_name = serializers.CharField(source="technician.full_name", read_only=True, default=None)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     current = serializers.SerializerMethodField()
+    service_ids = serializers.SerializerMethodField()
+
+    def get_service_ids(self, obj):
+        return [s.id for s in obj.plan.services.all()]
 
     def get_current(self, obj):
         from .service import current_period
@@ -68,4 +72,4 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = Subscription
         fields = ["id", "plan", "plan_name", "car", "car_name", "address", "customer", "customer_name",
                   "customer_phone", "weekday", "start_time", "technician", "technician_name", "status",
-                  "status_label", "renew", "created_at", "current"]
+                  "status_label", "renew", "created_at", "service_ids", "current"]

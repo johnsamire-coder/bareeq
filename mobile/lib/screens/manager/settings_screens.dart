@@ -19,6 +19,7 @@ const groupNames = {
   'payments': 'الدفع',
   'wallet': 'المحفظة',
   'loyalty': 'الولاء والمكافآت',
+  'subscriptions': 'الاشتراك الشهري',
   'notifications': 'الإشعارات',
   'ratings': 'التقييم',
 };
