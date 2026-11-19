@@ -6,7 +6,7 @@ from django import forms
 
 from services.admin import PoundsField, to_piastres
 
-from .models import DailyClosing, Invoice, Material, Payment, TechnicianCustody, WalletEntry
+from .models import DailyClosing, Invoice, Material, OnlinePayment, Payment, TechnicianCustody, WalletEntry
 
 
 class _ReadOnly(admin.ModelAdmin):
@@ -77,3 +77,9 @@ class MaterialAdmin(admin.ModelAdmin):
 class TechnicianCustodyAdmin(_ReadOnly):
     list_display = ("technician", "kind", "amount", "closing", "note", "created_by", "created_at")
     list_filter = ("kind",)
+
+
+@admin.register(OnlinePayment)
+class OnlinePaymentAdmin(_ReadOnly):
+    list_display = ("ref", "order", "provider", "amount", "status", "created_at", "finished_at")
+    list_filter = ("status", "provider")

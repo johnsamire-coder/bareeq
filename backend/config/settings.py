@@ -27,6 +27,10 @@ ALLOWED_HOSTS = [h.strip() for h in env("DJANGO_ALLOWED_HOSTS", "localhost").spl
 # version of the app from this folder, so app and API share one address.
 APP_WEB_DIR = env("APP_WEB_DIR", "")
 
+# Online payments (phase 3): which payment company. "fake" = a test company with
+# a test payment page (no real money). Must be the real one before launch.
+PAYMENT_GATEWAY = env("PAYMENT_GATEWAY", "fake")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

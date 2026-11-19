@@ -12,7 +12,7 @@ def wallet_option(order):
     from payments.models import Payment
     from payments.wallet import whole_pounds
 
-    due = order.payments.filter(method=Payment.Method.INSTAPAY, status=Payment.Status.REFUND_DUE,
+    due = order.payments.filter(method__in=[Payment.Method.INSTAPAY, Payment.Method.CARD], status=Payment.Status.REFUND_DUE,
                                 reviewed_at__isnull=False)
     amount = sum(p.amount for p in due)
     if amount <= 0:
@@ -31,7 +31,7 @@ def refund_to_wallet(order, customer):
     if order.customer_id != customer.id:
         raise BusinessError("not_your_order", "الطلب ده مش بتاعك.", status=403)
     payments = list(order.payments.select_for_update().filter(
-        method=Payment.Method.INSTAPAY, status=Payment.Status.REFUND_DUE, reviewed_at__isnull=False))
+        method__in=[Payment.Method.INSTAPAY, Payment.Method.CARD], status=Payment.Status.REFUND_DUE, reviewed_at__isnull=False))
     option = wallet_option(order)
     if not payments or option is None:
         raise BusinessError("nothing_to_refund", "مفيش فلوس مستنية ترجع في الطلب ده.")

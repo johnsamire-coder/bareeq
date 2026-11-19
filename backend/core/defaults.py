@@ -209,6 +209,23 @@ DEFAULT_SETTINGS = [
         "value_type": "text",
         "value": "[مؤقت] بيانات حساب InstaPay لسه هتتحط. من فضلك ماتحوّلش فلوس دلوقتي واختار الدفع كاش.",
     },
+    # Online payments (phase 3)
+    {
+        "key": "card-payment-enabled",
+        "group": "payments",
+        "label": "الدفع بالكارت ومحافظ الموبايل شغال",
+        "description": "",
+        "value_type": "boolean",
+        "value": True,
+    },
+    {
+        "key": "card-payment-hold-extra-minutes",
+        "group": "payments",
+        "label": "وقت زيادة للحجز المؤقت وصفحة الدفع مفتوحة",
+        "description": "عشان الميعاد ميروحش وهو بيكتب بيانات الكارت.",
+        "value_type": "minutes",
+        "value": 15,
+    },
     # VAT: off for now; invoices are issued without tax.
     {
         "key": "vat-enabled",

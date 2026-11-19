@@ -52,6 +52,8 @@ git config user.email "jssolutions.eg@gmail.com"
 |---|---|---|
 | `backend/.env` | مفتاح Django السري (`DJANGO_SECRET_KEY`)، وباسورد قاعدة البيانات (`DB_PASSWORD`) | الخطوة 2 |
 
+> في `backend/.env` كمان `PAYMENT_GATEWAY=fake` (شركة دفع تجريبية من غير فلوس حقيقية، من المرحلة 3). ده مش سر. لما حساب Paymob يجهز هنزود مفاتيحه هنا، ودي هتبقى أسرار.
+
 ## 4. Claude Code
 
 ```powershell

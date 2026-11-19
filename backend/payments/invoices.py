@@ -61,6 +61,7 @@ def issue_invoice(order):
         total=order.amount_due, wallet_amount=order.wallet_used,
         instapay_amount=_paid(order, Payment.Method.INSTAPAY, [Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]),
         cash_amount=_paid(order, Payment.Method.CASH, [Payment.Status.COLLECTED]),
+        card_amount=_paid(order, Payment.Method.CARD, [Payment.Status.CONFIRMED]),
     )
 
 

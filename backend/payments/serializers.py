@@ -33,12 +33,12 @@ class InvoiceSerializer(serializers.ModelSerializer):
     collected = serializers.SerializerMethodField()
 
     def get_collected(self, obj):
-        return obj.cash_amount + obj.instapay_amount
+        return obj.cash_amount + obj.instapay_amount + obj.card_amount
 
     class Meta:
         model = Invoice
         fields = ["id", "number", "order", "issued_at", "lines", "subtotal", "discount", "oil_total",
-                  "charges_total", "total", "revenue", "collected", "wallet_amount", "instapay_amount", "cash_amount",
+                  "charges_total", "total", "revenue", "collected", "wallet_amount", "instapay_amount", "card_amount", "cash_amount",
                   "status",
                   "status_label", "cancelled_at", "cancelled_by", "cancel_reason"]
 

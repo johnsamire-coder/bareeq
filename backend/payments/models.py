@@ -50,6 +50,7 @@ class Payment(models.Model):
     class Method(models.TextChoices):
         CASH = "cash", "كاش"
         INSTAPAY = "instapay", "InstaPay"
+        CARD = "card", "كارت / محفظة موبايل"
 
     class Status(models.TextChoices):
         PENDING_REVIEW = "pending_review", "مستني تأكيد المدير"
@@ -105,6 +106,7 @@ class Invoice(models.Model):
     total = models.PositiveIntegerField("الإجمالي المطلوب")
     wallet_amount = models.PositiveIntegerField("من المحفظة")
     instapay_amount = models.PositiveIntegerField("InstaPay")
+    card_amount = models.PositiveIntegerField("كارت / محفظة موبايل", default=0)
     cash_amount = models.PositiveIntegerField("كاش")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ISSUED)
     cancelled_at = models.DateTimeField(null=True, blank=True)
@@ -222,3 +224,33 @@ class TechnicianCustody(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError("Custody rows are never deleted.")
+
+
+class OnlinePayment(models.Model):
+    """One try to pay an order online (card or mobile wallet) through the payment
+    company (phase 3). The order is confirmed only when the company itself tells
+    us the money was taken (a signed message), never from the app."""
+
+    class Status(models.TextChoices):
+        CREATED = "created", "مستني الدفع"
+        PAID = "paid", "اتدفع"
+        FAILED = "failed", "مكملش"
+        LATE = "late", "اتدفع بعد ما الحجز خلص (لازم يترجع)"
+
+    ref = models.CharField("رقم العملية عندنا", max_length=40, unique=True)
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="online_payments")
+    provider = models.CharField("شركة الدفع", max_length=30)
+    amount = models.PositiveIntegerField("المبلغ (قرش)")
+    wallet_amount = models.PositiveIntegerField("من المحفظة (قرش)", default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CREATED)
+    provider_txn_id = models.CharField("رقم العملية عند شركة الدفع", max_length=100, blank=True)
+    callback_data = models.JSONField("رد شركة الدفع", default=dict, blank=True)
+    note = models.CharField(max_length=300, blank=True)
+    payment = models.ForeignKey(Payment, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+    created_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "دفع أونلاين"
+        verbose_name_plural = "الدفع الأونلاين"

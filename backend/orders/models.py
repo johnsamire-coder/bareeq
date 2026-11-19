@@ -89,7 +89,7 @@ class Order(models.Model):
         from payments.models import Payment
 
         instapay = sum(p.amount for p in self.payments.filter(
-            method=Payment.Method.INSTAPAY,
+            method__in=[Payment.Method.INSTAPAY, Payment.Method.CARD],
             status__in=[Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]))
         return max(0, self.amount_due - self.wallet_used - instapay)
 

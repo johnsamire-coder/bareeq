@@ -119,7 +119,7 @@ def on_order_not_happening(order):
     """Cancelled / car not found: wallet part goes back to the wallet; InstaPay
     money is marked to be returned by the manager."""
     wallet.refund_order_spend(order)
-    order.payments.filter(method=Payment.Method.INSTAPAY,
+    order.payments.filter(method__in=[Payment.Method.INSTAPAY, Payment.Method.CARD],
                           status__in=[Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]
                           ).update(status=Payment.Status.REFUND_DUE)
 

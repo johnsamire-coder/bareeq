@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from . import views
+from . import views, views_online
 
 router = DefaultRouter()
 router.register("manage/payments", views.ManagerPaymentViewSet, basename="manage-payment")
@@ -11,6 +11,10 @@ router.register("manage/materials", views.ManagerMaterialViewSet, basename="mana
 
 urlpatterns = [
     path("payment-info/", views.payment_info, name="payment-info"),
+    path("orders/<int:pk>/pay-online/", views_online.pay_online, name="pay-online"),
+    path("pay/callback/<str:provider>/", views_online.callback, name="pay-callback"),
+    path("pay/fake/<str:ref>/", views_online.fake_page, name="pay-fake-page"),
+    path("pay/<str:ref>/", views_online.payment_status, name="pay-status"),
     path("my-wallet/", views.my_wallet, name="my-wallet"),
     path("my-invoices/", views.my_invoices, name="my-invoices"),
     path("payment-proofs/<int:pk>/file/", views.proof_file, name="payment-proof-file"),
