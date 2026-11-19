@@ -21,5 +21,10 @@ def terms_v3_text():
     return (_HERE / "terms_v3_ar.md").read_text(encoding="utf-8")
 
 
+def terms_v4_text():
+    """v4 (phase 3): the monthly subscription, and paying by card / mobile wallet."""
+    return (_HERE / "terms_v4_ar.md").read_text(encoding="utf-8")
+
+
 def latest_terms_text():
-    return terms_v3_text()
+    return terms_v4_text()

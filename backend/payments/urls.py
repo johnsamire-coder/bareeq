@@ -12,6 +12,7 @@ router.register("manage/materials", views.ManagerMaterialViewSet, basename="mana
 urlpatterns = [
     path("payment-info/", views.payment_info, name="payment-info"),
     path("orders/<int:pk>/pay-online/", views_online.pay_online, name="pay-online"),
+    path("orders/<int:pk>/refund-to-card/", views_online.refund_to_card, name="refund-to-card"),
     path("pay/callback/<str:provider>/", views_online.callback, name="pay-callback"),
     path("pay/fake/<str:ref>/", views_online.fake_page, name="pay-fake-page"),
     path("pay/<str:ref>/", views_online.payment_status, name="pay-status"),

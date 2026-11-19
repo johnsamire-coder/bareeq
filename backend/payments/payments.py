@@ -17,6 +17,8 @@ METHODS = (Payment.Method.CASH, Payment.Method.INSTAPAY)
 
 
 def confirm_with_payment(order, method, wallet_amount=0, proof_file=None):
+    if order.subscription_period_id:
+        raise BusinessError("pay_the_month", "زيارة الاشتراك بتتدفع مع الشهر كله من صفحة الاشتراك.")
     # The extra discount may have changed since the customer saw the price
     # (only one per order, the biggest). Save the new one first, then ask the
     # customer to look again instead of charging a different amount silently.
@@ -96,6 +98,14 @@ def review_instapay(payment, manager, approve, reason=""):
     payment.reviewed_at = timezone.now()
     payment.review_reason = (reason or "").strip()[:300]
     payment.save()
+    if payment.order.subscription_period_id:
+        # One transfer for the whole month: the other visits follow the same decision.
+        for sib in Payment.objects.select_for_update().filter(
+                order__subscription_period_id=payment.order.subscription_period_id, method=Payment.Method.INSTAPAY,
+                status=Payment.Status.PENDING_REVIEW).exclude(pk=payment.pk):
+            sib.status, sib.reviewed_by, sib.reviewed_at = payment.status, manager, payment.reviewed_at
+            sib.review_reason = payment.review_reason
+            sib.save()
     if approve:
         from loyalty.rewards import on_payment_confirmed
 
@@ -117,7 +127,10 @@ def mark_refunded(payment, manager):
 
 def on_order_not_happening(order):
     """Cancelled / car not found: wallet part goes back to the wallet; InstaPay
-    money is marked to be returned by the manager."""
+    money is marked to be returned by the manager. A subscription visit is paid
+    with its month: nothing comes back (the company books a replacement)."""
+    if order.subscription_period_id:
+        return
     wallet.refund_order_spend(order)
     order.payments.filter(method__in=[Payment.Method.INSTAPAY, Payment.Method.CARD],
                           status__in=[Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]

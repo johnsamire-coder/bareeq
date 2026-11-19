@@ -44,6 +44,8 @@ def apply_coupon(order, customer, code):
         raise BusinessError("not_your_order", "الطلب ده مش بتاعك.", status=403)
     if order.status != S.PENDING_PAYMENT:
         raise BusinessError("not_pending", "الكود بيتحط قبل تأكيد الحجز بس.")
+    if order.subscription_period_id:
+        raise BusinessError("coupon_not_on_subscription", "الكوبونات مش على زيارات الاشتراك.")
     coupon = Coupon.objects.select_for_update().filter(code__iexact=(code or "").strip()).first()
     if coupon is None or not coupon.is_active:
         raise BusinessError("coupon_invalid", "الكود ده مش صحيح.")

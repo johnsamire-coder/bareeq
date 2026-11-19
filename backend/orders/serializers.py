@@ -62,6 +62,11 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_cashback_amount(self, obj):
         return sum(e.amount for e in obj.wallet_entries.filter(kind="cashback"))
 
+    card_refund_due = serializers.SerializerMethodField()
+
+    def get_card_refund_due(self, obj):
+        return sum(p.amount for p in obj.payments.filter(method="card", status="refund_due"))
+
     def get_refund_option(self, obj):
         from loyalty.refunds import wallet_option
 
@@ -79,7 +84,8 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ["id", "status", "status_label", "scheduled_start", "scheduled_end", "total_minutes",
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
                   "payment_method", "subtotal", "discount", "total", "extra_discount_kind", "extra_discount",
-                  "extra_discount_label", "coupon_code", "cashback_percent", "cashback_amount", "refund_option", "charges_total",
+                  "extra_discount_label", "coupon_code", "cashback_percent", "cashback_amount", "refund_option",
+                  "card_refund_due", "subscription_period", "charges_total",
                   "amount_due", "wallet_used",
                   "amount_to_collect", "revenue", "collected", "uncollected", "items",
                   "actual_start", "actual_end", "cancel_reason", "is_rated", "created_at"]

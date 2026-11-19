@@ -7,7 +7,7 @@ def progress(customer):
     """How many completed orders since the last order that used the reward."""
     from orders.models import Order
 
-    done = Order.objects.filter(customer=customer, status=Order.Status.COMPLETED)
+    done = Order.objects.filter(customer=customer, status=Order.Status.COMPLETED, subscription_period__isnull=True)
     last_reward = done.filter(extra_discount_kind="wash_card").order_by("-actual_end").first()
     if last_reward is not None:
         done = done.filter(actual_end__gt=last_reward.actual_end)

@@ -44,6 +44,7 @@ from .serializers import (
 def payment_info(request):
     """What the payment screen shows: InstaPay details, wallet balance and the % limit."""
     data = {"instapay_details": get_setting("instapay-payment-details"),
+            "card_payment_enabled": bool(get_setting("card-payment-enabled")),
             "wallet_max_order_share_percent": get_setting("wallet-max-order-share-percent"),
             # Shown before the customer cancels or reschedules (same numbers as the terms).
             "cancellation_free_until_hours": get_setting("cancellation-free-until-hours"),

@@ -41,8 +41,8 @@ def on_completed(order):
     from .referral import after_paid_order
     from .wash_card import after_completed
 
-    if order.status != "completed":
-        return
+    if order.status != "completed" or order.subscription_period_id:
+        return  # subscription visits: no cashback, wash card or invite reward (agreed 19 Nov 2026)
     after_completed(order)
     if is_paid(order):
         give_cashback(order)
@@ -51,7 +51,7 @@ def on_completed(order):
 
 def on_payment_confirmed(order):
     """InstaPay approved after the job was already done: now it is paid."""
-    if order.status == "completed" and is_paid(order):
+    if order.status == "completed" and is_paid(order) and not order.subscription_period_id:
         from .referral import after_paid_order
 
         with transaction.atomic():

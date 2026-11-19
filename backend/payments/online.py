@@ -32,6 +32,8 @@ def start(order, customer, wallet_amount=0):
         raise BusinessError("payment_method_not_available", "الدفع بالكارت مش متاح دلوقتي.")
     if order.customer_id != customer.id:
         raise BusinessError("not_your_order", "الطلب ده مش بتاعك.", status=403)
+    if order.subscription_period_id:
+        raise BusinessError("pay_the_month", "زيارة الاشتراك بتتدفع مع الشهر كله من صفحة الاشتراك.")
     if _refresh_discount(order):
         raise BusinessError("discount_changed", "الخصم على الطلب اتغير. راجع المبلغ الجديد وأكد تاني.", status=409)
     return _start(order, wallet_amount)
@@ -98,6 +100,14 @@ def _apply(result, provider, data):
                         f"طلب {payment.order_id}: {payment.note}. راجع شركة الدفع.", {"order": payment.order_id})
         return payment
     order = Order.objects.select_for_update().get(pk=payment.order_id)
+    if payment.period_id:
+        from subscriptions.service import online_paid
+
+        if not online_paid(payment):
+            return _late(payment, order, "شهر الاشتراك خلص وقت حجزه قبل ما الدفع يوصل")
+        payment.status = S.PAID
+        payment.save()
+        return payment
     if order.status != Order.Status.PENDING_PAYMENT:
         return _late(payment, order)
     wallet_amount = payment.wallet_amount if payment.wallet_amount <= wallet.balance(order.customer) else 0
@@ -133,3 +143,49 @@ def _late(payment, order, why="الحجز خلص أو اتلغى قبل ما ا�
                     f"طلب {order.id}: {why}. المبلغ {payment.amount // 100} جنيه لازم يترجع للعميل.",
                     {"order": order.id})
     return payment
+
+
+# ---------- giving card money back ----------
+
+@transaction.atomic
+def refund_to_card(payment):
+    """Send a card payment marked «لازم يترجع» back through the payment company."""
+    payment = Payment.objects.select_for_update().get(pk=payment.pk)
+    if payment.method != Payment.Method.CARD or payment.status != Payment.Status.REFUND_DUE:
+        raise BusinessError("not_refund_due", "الدفعة دي مش مستنية استرجاع.")
+    attempt = OnlinePayment.objects.filter(payment=payment).first()
+    if attempt is None:
+        raise BusinessError("not_refund_due", "مش لاقيين عملية الدفع دي عند شركة الدفع.")
+    get_gateway(attempt.provider).refund(attempt, payment.amount)
+    payment.status, payment.reviewed_at = Payment.Status.REFUNDED, timezone.now()
+    payment.save(update_fields=["status", "reviewed_at"])
+    attempt.refunded_at = timezone.now()
+    attempt.save(update_fields=["refunded_at"])
+    return payment
+
+
+def refund_order_to_card(order, customer):
+    if order.customer_id != customer.id:
+        raise BusinessError("not_your_order", "الطلب ده مش بتاعك.", status=403)
+    due = list(order.payments.filter(method=Payment.Method.CARD, status=Payment.Status.REFUND_DUE))
+    if not due:
+        raise BusinessError("nothing_to_refund", "مفيش فلوس مستنية ترجع في الطلب ده.")
+    return [refund_to_card(p) for p in due]
+
+
+def auto_refund_cards():
+    """Card money waiting more than the setting (the customer did not choose the
+    wallet): goes back to the card by itself (run_scheduled_jobs)."""
+    from django.db.models import Q
+
+    hours = get_setting("card-refund-auto-after-hours")
+    cutoff = timezone.now() - timedelta(hours=hours)
+    n = 0
+    for p in Payment.objects.filter(method=Payment.Method.CARD, status=Payment.Status.REFUND_DUE).filter(
+            Q(order__updated_at__lte=cutoff)):
+        try:
+            refund_to_card(p)
+            n += 1
+        except BusinessError:
+            pass
+    return n

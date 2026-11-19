@@ -47,9 +47,13 @@ class Order(models.Model):
     # coupon / wash card / referral first order (orders/discounts.py).
     extra_discount_kind = models.CharField("نوع الخصم الإضافي", max_length=20, blank=True,
                                            choices=[("coupon", "كوبون"), ("wash_card", "كارت الغسيل"),
-                                                    ("referral", "خصم أول طلب (دعوة)")])
+                                                    ("referral", "خصم أول طلب (دعوة)"),
+                                                    ("subscription", "الاشتراك")])
     extra_discount = models.PositiveIntegerField("الخصم الإضافي (قرش)", default=0)
     materials_cost = models.PositiveIntegerField("تكلفة الخامات (قرش)", default=0)
+    # A visit of a monthly subscription (phase 3): paid with the subscription.
+    subscription_period = models.ForeignKey("subscriptions.SubscriptionPeriod", null=True, blank=True,
+                                            on_delete=models.PROTECT, related_name="visits")
     actual_start = models.DateTimeField("بدأ فعلاً", null=True, blank=True)
     actual_end = models.DateTimeField("خلص فعلاً", null=True, blank=True)
     called_customer_at = models.DateTimeField("الفني كلم العميل", null=True, blank=True)

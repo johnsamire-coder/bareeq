@@ -55,7 +55,7 @@ def best(order):
     On a tie the earlier kind in the list wins (coupon, wash card, referral)."""
     found = candidates(order)
     kind = None
-    for k in LABELS:
+    for k in _PROVIDERS:
         if k in found and (kind is None or found[k] > found[kind]):
             kind = k
     return (kind, found[kind]) if kind else ("", 0)
@@ -63,6 +63,8 @@ def best(order):
 
 def refresh(order):
     """Put the best extra discount on the order and save. Returns the order."""
+    if order.subscription_period_id:
+        return order  # a subscription visit: its price comes from the subscription
     kind, amount = best(order)
     if (order.extra_discount_kind, order.extra_discount) != (kind, amount):
         order.extra_discount_kind, order.extra_discount = kind, amount

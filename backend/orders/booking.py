@@ -136,10 +136,16 @@ def _travel_from_previous(profile, jobs, t, place, travel):
 
 
 @transaction.atomic
-def create_order(customer, address_id, items, start):
+def create_order(customer, address_id, items, start, *, prefer_technician=None, check_window=True,
+                 attach_charges=True, subscription_period=None):
+    """Book and hold. Subscription visits (phase 3) pass check_window=False (they
+    are weeks ahead), no older fees, and ask for the same technician when he fits."""
     prep = prepare(customer, address_id, items)
     now = timezone.now()
-    _check_start(start, now)
+    if check_window:
+        _check_start(start, now)
+    elif start <= now:
+        raise BusinessError("too_soon", "الميعاد ده فات.")
     cfg, travel = config(), travel_function()
     day = start.astimezone(CAIRO).date()
     if is_closed(prep.zone, day):
@@ -152,7 +158,8 @@ def create_order(customer, address_id, items, start):
         jobs = jobs_for(profile.user, day)
         if can_fit(start, prep.minutes, prep.place, jobs, shift, profile.home, cfg, travel):
             # Nearest first; then the one with fewer jobs that day.
-            key = (_travel_from_previous(profile, jobs, start, prep.place, travel), len(jobs), profile.user_id)
+            key = (profile.user_id != getattr(prefer_technician, "id", None),
+                   _travel_from_previous(profile, jobs, start, prep.place, travel), len(jobs), profile.user_id)
             if best is None or key < best[0]:
                 best = (key, profile)
     if best is None:
@@ -164,11 +171,13 @@ def create_order(customer, address_id, items, start):
         total_minutes=prep.minutes, status=Order.Status.PENDING_PAYMENT,
         hold_expires_at=now + timedelta(minutes=get_setting("scheduling-slot-hold-minutes")),
         subtotal=prep.subtotal, discount=prep.discount, total=prep.total,
+        subscription_period=subscription_period,
     )
     for car, q in prep.lines:
         OrderItem.objects.create(order=order, car=car, size_class=car.size_class, quote=q,
                                  minutes=q["total_minutes"], total=q["total"])
-    attach_to_order(order)
+    if attach_charges:
+        attach_to_order(order)
     from .discounts import refresh
 
     refresh(order)

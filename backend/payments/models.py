@@ -247,6 +247,10 @@ class OnlinePayment(models.Model):
     callback_data = models.JSONField("رد شركة الدفع", default=dict, blank=True)
     note = models.CharField(max_length=300, blank=True)
     payment = models.ForeignKey(Payment, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+    # A month of a subscription (phase 3) instead of one order.
+    period = models.ForeignKey("subscriptions.SubscriptionPeriod", null=True, blank=True, on_delete=models.PROTECT,
+                               related_name="online_payments")
+    refunded_at = models.DateTimeField("رجعت للكارت", null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     finished_at = models.DateTimeField(null=True, blank=True)
 

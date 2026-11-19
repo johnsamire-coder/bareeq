@@ -18,7 +18,7 @@ from .models import OnlinePayment
 
 
 def _status(p):
-    return {"ref": p.ref, "order": p.order_id, "amount": p.amount, "wallet_amount": p.wallet_amount,
+    return {"ref": p.ref, "order": p.order_id, "period": p.period_id, "amount": p.amount, "wallet_amount": p.wallet_amount,
             "status": p.status, "status_label": p.get_status_display()}
 
 
@@ -28,6 +28,14 @@ def pay_online(request, pk):
     order = get_object_or_404(Order, pk=pk, customer=request.user)
     p = online.start(order, request.user, request.data.get("wallet_amount") or 0)
     return Response({**_status(p), "redirect_url": get_gateway().checkout_url(p, request)}, status=201)
+
+
+@api_view(["POST"])
+@permission_classes([IsCustomer])
+def refund_to_card(request, pk):
+    order = get_object_or_404(Order, pk=pk, customer=request.user)
+    done = online.refund_order_to_card(order, request.user)
+    return Response({"refunded": sum(p.amount for p in done)})
 
 
 @api_view(["GET"])

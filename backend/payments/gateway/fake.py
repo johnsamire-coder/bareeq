@@ -25,6 +25,10 @@ class FakeGateway:
     def checkout_url(self, payment, request):
         return request.build_absolute_uri(f"/api/pay/fake/{payment.ref}/")
 
+    def refund(self, payment, amount):
+        """The test company always gives the money back."""
+        return f"FAKE-REFUND-{payment.id}"
+
     def parse_callback(self, data):
         try:
             ref, paid, amount, txn = data["ref"], data["paid"] in (True, "1", 1, "true"), int(data["amount"]), \

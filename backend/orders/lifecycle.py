@@ -140,6 +140,11 @@ def cancel_by_customer(order, reason=""):
     if order.status not in (S.PENDING_PAYMENT, S.CONFIRMED):
         raise BusinessError("cannot_cancel", "الطلب ده مينفعش يتلغي دلوقتي. كلم خدمة العملاء.")
     late = order.status == S.CONFIRMED and _is_late(order)
+    if order.subscription_period_id and order.status == S.CONFIRMED:
+        if not late:
+            raise BusinessError("subscription_visit_reschedule",
+                                "زيارة الاشتراك مبتتلغيش: أجّلها لميعاد تاني في نفس الشهر.")
+        late = False  # a late-cancelled visit is lost; no extra fee (already paid)
     _not_happening(order)
     _move(order, S.CANCELLED_BY_CUSTOMER, order.customer, note=reason[:300], cancel_reason=reason[:300])
     if late:
@@ -156,6 +161,10 @@ def cancel_by_company(order, manager, reason):
     if order.status not in (S.PENDING_PAYMENT, S.CONFIRMED, S.ON_THE_WAY, S.ARRIVED):
         raise BusinessError("cannot_cancel", "الطلب ده مينفعش يتلغي دلوقتي.")
     _not_happening(order)
+    if order.subscription_period_id and order.status == S.CONFIRMED:
+        from subscriptions.service import on_company_cancel
+
+        on_company_cancel(order)
     return _move(order, S.CANCELLED_BY_COMPANY, manager, note=reason[:300], cancel_reason=reason[:300])
 
 
@@ -170,6 +179,11 @@ def reschedule(order, new_start):
         raise BusinessError("cannot_reschedule", "الطلب ده مينفعش يتأجل دلوقتي.")
     _check_start(new_start, timezone.now())
     late = _is_late(order)
+    if order.subscription_period_id:
+        from subscriptions.service import check_reschedule
+
+        check_reschedule(order, new_start)
+        late = False  # no fee on a paid subscription visit
     day = new_start.astimezone(CAIRO).date()
     from scheduling.models import is_closed
 

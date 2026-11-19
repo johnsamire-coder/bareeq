@@ -226,6 +226,39 @@ DEFAULT_SETTINGS = [
         "value_type": "minutes",
         "value": 15,
     },
+    {
+        "key": "card-refund-auto-after-hours",
+        "group": "payments",
+        "label": "فلوس الكارت ترجع لوحدها بعد",
+        "description": "لو الطلب المدفوع بالكارت اتلغى والعميل ماختارش المحفظة.",
+        "value_type": "hours",
+        "value": 24,
+    },
+    # Monthly subscription (phase 3)
+    {
+        "key": "subscriptions-enabled",
+        "group": "subscriptions",
+        "label": "الاشتراك الشهري شغال",
+        "description": "",
+        "value_type": "boolean",
+        "value": True,
+    },
+    {
+        "key": "subscription-renewal-reminder-days",
+        "group": "subscriptions",
+        "label": "تذكير التجديد قبل نهاية الشهر بـ",
+        "description": "",
+        "value_type": "days",
+        "value": 3,
+    },
+    {
+        "key": "subscription-makeup-extra-days",
+        "group": "subscriptions",
+        "label": "زيارة الشركة لغتها تتعوض لحد كام يوم بعد الشهر",
+        "description": "",
+        "value_type": "days",
+        "value": 7,
+    },
     # VAT: off for now; invoices are issued without tax.
     {
         "key": "vat-enabled",

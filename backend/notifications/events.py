@@ -121,3 +121,17 @@ def wash_card_ready(customer, percent, order):
 def winback(customer, last_order):
     notify(customer, "winback", "وحشتنا", "بقالك فترة مغسلتش عربيتك معانا. احجز غسلتك الجاية في دقيقة.",
            {"action": "book"}, dedupe_key=f"winback:{last_order.id}")
+
+
+def subscription_confirmed(period):
+    sub = period.subscription
+    notify(sub.customer, "subscription", "اشتراكك اتأكد",
+           f"اشتراك «{sub.plan.name}» من {period.start_date:%d/%m} لحد {period.end_date:%d/%m}. "
+           f"مواعيدك في «طلباتي».", {"subscription": sub.id})
+
+
+def subscription_renewal(period):
+    sub = period.subscription
+    notify(sub.customer, "subscription", "اشتراكك قرب يخلص",
+           f"اشتراك «{sub.plan.name}» بيخلص يوم {period.end_date:%d/%m}. جدده عشان تحافظ على ميعادك.",
+           {"subscription": sub.id, "action": "renew"}, dedupe_key=f"subscription-renewal:{period.id}")
