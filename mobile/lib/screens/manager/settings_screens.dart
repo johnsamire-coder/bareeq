@@ -20,6 +20,8 @@ const groupNames = {
   'wallet': 'المحفظة',
   'loyalty': 'الولاء والمكافآت',
   'subscriptions': 'الاشتراك الشهري',
+  'fees': 'الطلب السريع ورسوم المسافة',
+  'tracking': 'التتبع والتقارير',
   'notifications': 'الإشعارات',
   'ratings': 'التقييم',
 };

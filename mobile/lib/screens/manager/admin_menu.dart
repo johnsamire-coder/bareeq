@@ -4,6 +4,8 @@ import '../../widgets/common.dart';
 import 'cars_catalog_screen.dart';
 import 'close_day_screen.dart';
 import 'custody_screen.dart';
+import 'live_map_screen.dart';
+import 'supervisors_screen.dart';
 import 'subscriptions_admin_screen.dart';
 import 'wallet_report_screen.dart';
 import 'customers_screen.dart';
@@ -71,6 +73,18 @@ class AdminMenu extends StatelessWidget {
           () => const CustodyScreen(),
         ),
         const SectionTitle('الشغل'),
+        item(
+          Icons.map_outlined,
+          'خريطة اليوم',
+          'الفنيين وهم في الطريق، وطلبات النهارده',
+          () => const LiveMapScreen(),
+        ),
+        item(
+          Icons.supervisor_account_outlined,
+          'المشرفين',
+          'إضافة، والمناطق، والإيقاف',
+          () => const SupervisorsScreen(),
+        ),
         item(
           Icons.engineering_outlined,
           'الفنيين',

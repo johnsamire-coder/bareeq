@@ -33,10 +33,17 @@ class _ManagerOrderScreenState extends State<ManagerOrderScreen> {
     _load();
   }
 
+  bool get _supervisor => context.read<Session>().role == 'supervisor';
+
   Future<void> _load() async {
     try {
+      // A supervisor has no money screens: the plain order instead.
       final o = Map<String, dynamic>.from(
-        await _api.get('manage/orders/${widget.orderId}/money/'),
+        await _api.get(
+          _supervisor
+              ? 'manage/orders/${widget.orderId}/'
+              : 'manage/orders/${widget.orderId}/money/',
+        ),
       );
       final photos =
           await _api.get('manage/orders/${widget.orderId}/photos/') as List;
@@ -47,9 +54,15 @@ class _ManagerOrderScreenState extends State<ManagerOrderScreen> {
   }
 
   Future<void> _move() async {
-    final techs = (await _api.get('technicians/') as List)
-        .where((t) => t['is_active'] == true && t['id'] != _o!['technician'])
-        .toList();
+    final techs =
+        (await _api.get(
+                  _supervisor ? 'manage/zone-technicians/' : 'technicians/',
+                )
+                as List)
+            .where(
+              (t) => t['is_active'] != false && t['id'] != _o!['technician'],
+            )
+            .toList();
     if (!mounted) return;
     final t = await showModalBottomSheet<Map>(
       context: context,
@@ -80,7 +93,9 @@ class _ManagerOrderScreenState extends State<ManagerOrderScreen> {
         'technician': t['id'],
       });
     } on ApiError catch (e) {
-      if (e.code != 'technician_not_available' || !mounted) rethrow;
+      if (e.code != 'technician_not_available' || !mounted || _supervisor) {
+        rethrow;
+      }
       final force = await confirmDialog(
         context,
         'الفني مش فاضي',
@@ -193,33 +208,34 @@ class _ManagerOrderScreenState extends State<ManagerOrderScreen> {
             ),
           ),
         ),
-        const SectionTitle('الفلوس'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              children: [
-                KeyValue('الإيراد', money(o['revenue']), bold: true),
-                KeyValue(
-                  'اتحصّل فعلاً (كاش + InstaPay)',
-                  money(o['collected']),
-                ),
-                KeyValue('من المحفظة', money(o['wallet_used'])),
-                if ((o['uncollected'] as int) > 0)
+        if (!_supervisor) const SectionTitle('الفلوس'),
+        if (!_supervisor)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: [
+                  KeyValue('الإيراد', money(o['revenue']), bold: true),
                   KeyValue(
-                    'لسه متحصّلش',
-                    money(o['uncollected']),
-                    color: BrandColors.danger,
+                    'اتحصّل فعلاً (كاش + InstaPay)',
+                    money(o['collected']),
                   ),
-                const Divider(color: BrandColors.line),
-                KeyValue('الزيت', money(o['oil_total'])),
-                KeyValue('الخامات', money(o['materials_cost'])),
-                KeyValue('هامش الغسلة', money(o['wash_margin']), bold: true),
-                const Muted('هامش الغسلة مش داخل فيه أجر الفني ولا البنزين.'),
-              ],
+                  KeyValue('من المحفظة', money(o['wallet_used'])),
+                  if ((o['uncollected'] as int) > 0)
+                    KeyValue(
+                      'لسه متحصّلش',
+                      money(o['uncollected']),
+                      color: BrandColors.danger,
+                    ),
+                  const Divider(color: BrandColors.line),
+                  KeyValue('الزيت', money(o['oil_total'])),
+                  KeyValue('الخامات', money(o['materials_cost'])),
+                  KeyValue('هامش الغسلة', money(o['wash_margin']), bold: true),
+                  const Muted('هامش الغسلة مش داخل فيه أجر الفني ولا البنزين.'),
+                ],
+              ),
             ),
           ),
-        ),
         if (_photos.isNotEmpty) ...[
           const SectionTitle('صور قبل وبعد'),
           PhotoGrid(photos: _photos),
@@ -233,12 +249,13 @@ class _ManagerOrderScreenState extends State<ManagerOrderScreen> {
             onPressed: _move,
           ),
         const SizedBox(height: 8),
-        if ({
-          'pending_payment',
-          'confirmed',
-          'on_the_way',
-          'arrived',
-        }.contains(status))
+        if (!_supervisor &&
+            {
+              'pending_payment',
+              'confirmed',
+              'on_the_way',
+              'arrived',
+            }.contains(status))
           BusyButton(
             label: 'إلغاء من الشركة',
             outlined: true,

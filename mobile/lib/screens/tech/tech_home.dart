@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/format.dart';
+import '../../core/location.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
@@ -19,6 +22,42 @@ class TechHome extends StatefulWidget {
 
 class _TechHomeState extends State<TechHome> {
   int _tab = 0;
+  Timer? _locationTimer;
+  int _interval = 30;
+
+  @override
+  void initState() {
+    super.initState();
+    _report();
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
+  }
+
+  /// While a job of his is «في الطريق», the app sends his position every few
+  /// seconds (the server says if it is needed and how often). Otherwise nothing.
+  Future<void> _report() async {
+    final api = context.read<Session>().api;
+    try {
+      var r = await api.post('technician/location/', {});
+      if (r['active'] == true) {
+        final pos = await currentPosition();
+        if (pos != null) {
+          r = await api.post('technician/location/', {
+            'lat': coord(pos.latitude),
+            'lng': coord(pos.longitude),
+            'accuracy': pos.accuracy.round(),
+          });
+        }
+      }
+      _interval = (r['interval_seconds'] ?? 30) as int;
+    } catch (_) {}
+    if (!mounted) return;
+    _locationTimer = Timer(Duration(seconds: _interval), _report);
+  }
 
   @override
   Widget build(BuildContext context) {

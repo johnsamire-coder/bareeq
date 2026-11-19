@@ -137,6 +137,8 @@ cd D:\bareeq\backend
 .\.venv\Scripts\python manage.py test
 ```
 
+> من المرحلة 4 المشروع بيستخدم مكتبة `openpyxl` (ملفات Excel). بتتسطب لوحدها مع `pip install -r requirements.txt`. لو سحبت شغل جديد، شغّل الأمر ده تاني.
+
 
 ### تطبيق الموبايل (Flutter) — من الخطوة 11
 

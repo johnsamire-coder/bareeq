@@ -12,6 +12,7 @@ import '../booking/slots_screen.dart';
 import 'damage_report_screen.dart';
 import 'rating_screen.dart';
 import 'status.dart';
+import 'tracking_card.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({super.key, required this.orderId});
@@ -186,6 +187,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
           ),
         ),
+        if (status == 'on_the_way') TrackingCard(orderId: widget.orderId),
         if (o['refund_option'] != null) _refundCard(o['refund_option'] as Map),
         if (((o['card_refund_due'] ?? 0) as int) > 0)
           Padding(
@@ -245,6 +247,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     'رسوم من طلب سابق',
                     money(o['charges_total']),
                     color: BrandColors.danger,
+                  ),
+                if (((o['express_fee'] ?? 0) as int) > 0)
+                  KeyValue('رسوم الطلب السريع', money(o['express_fee'])),
+                if (((o['distance_fee'] ?? 0) as int) > 0)
+                  KeyValue(
+                    'رسوم المسافة (${o['distance_km']} كيلو)',
+                    money(o['distance_fee']),
                   ),
                 const Divider(color: BrandColors.line),
                 KeyValue('الإجمالي', money(o['amount_due']), bold: true),

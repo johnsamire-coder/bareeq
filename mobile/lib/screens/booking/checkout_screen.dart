@@ -227,6 +227,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       money(o['charges_total']),
                       color: BrandColors.danger,
                     ),
+                  if (((o['express_fee'] ?? 0) as int) > 0)
+                    KeyValue('رسوم الطلب السريع', money(o['express_fee'])),
+                  if (((o['distance_fee'] ?? 0) as int) > 0)
+                    KeyValue(
+                      'رسوم المسافة (${o['distance_km']} كيلو)',
+                      money(o['distance_fee']),
+                    ),
                   const Divider(color: BrandColors.line),
                   KeyValue('الإجمالي', money(due), bold: true),
                 ],

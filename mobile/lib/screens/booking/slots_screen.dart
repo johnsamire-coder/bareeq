@@ -62,6 +62,24 @@ class _SlotsScreenState extends State<SlotsScreen> {
     }
   }
 
+  Future<void> _express() async {
+    final api = context.read<Session>().api;
+    final order = await api.post('orders/', {
+      'address': widget.addressId,
+      'items': widget.items,
+      'start': '${_data!['express']['start']}',
+      'express': true,
+    });
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CheckoutScreen(order: Map<String, dynamic>.from(order)),
+      ),
+    );
+    if (mounted) _load();
+  }
+
   Future<void> _book() async {
     if (widget.pickLabel != null) {
       Navigator.pop(context, _start);
@@ -143,7 +161,13 @@ class _SlotsScreenState extends State<SlotsScreen> {
                     money(c['amount']),
                     color: BrandColors.danger,
                   ),
-                if (charges.isNotEmpty)
+                if (((_data!['distance_fee'] ?? 0) as int) > 0)
+                  KeyValue(
+                    'رسوم المسافة (${_data!['distance_km']} كيلو)',
+                    money(_data!['distance_fee']),
+                  ),
+                if (charges.isNotEmpty ||
+                    ((_data!['distance_fee'] ?? 0) as int) > 0)
                   KeyValue('المطلوب', money(_data!['amount_due']), bold: true),
               ],
             ),
@@ -156,6 +180,35 @@ class _SlotsScreenState extends State<SlotsScreen> {
               'عليك رسوم من طلب قبل كده، وهتتضاف على الطلب ده في سطر لوحدها.',
             ),
           ),
+        if (_data!['express'] != null &&
+            widget.pickLabel == null &&
+            widget.rescheduleOrderId == null) ...[
+          const SizedBox(height: 10),
+          Card(
+            color: BrandColors.razaz,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'عايز حد دلوقتي؟ فني يقدر يبدأ الساعة ${clock(parseServerTime('${_data!['express']['start']}'))}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  Muted(
+                    'طلب سريع، عليه رسوم ${money(_data!['express']['fee'])}.',
+                  ),
+                  const SizedBox(height: 8),
+                  BusyButton(
+                    label: 'اطلب سريع',
+                    icon: Icons.bolt,
+                    onPressed: _express,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SectionTitle('اليوم'),
         SizedBox(
           height: 74,

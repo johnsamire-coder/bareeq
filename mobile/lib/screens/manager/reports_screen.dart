@@ -5,6 +5,7 @@ import '../../core/format.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
+import 'detailed_reports_screen.dart';
 import 'cars_catalog_screen.dart';
 import 'today_screen.dart';
 
@@ -62,7 +63,33 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     const labels = ['النهارده', 'آخر 7 أيام', 'الشهر ده', 'الشهر اللي فات'];
     return Scaffold(
-      appBar: AppBar(title: const Text('التقارير')),
+      appBar: AppBar(
+        title: const Text('التقارير'),
+        actions: [
+          IconButton(
+            tooltip: 'تقارير تفصيلية',
+            icon: const Icon(Icons.groups_outlined),
+            onPressed: () {
+              final (a, b) = _range;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      DetailedReportsScreen(from: isoDay(a), to: isoDay(b)),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: 'صدّر Excel',
+            icon: const Icon(Icons.file_download_outlined),
+            onPressed: () {
+              final (a, b) = _range;
+              exportReport(context, isoDay(a), isoDay(b));
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           SizedBox(

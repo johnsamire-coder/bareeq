@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/format.dart';
 import '../../core/session.dart';
+import 'live_map_screen.dart';
 import '../../core/theme.dart';
 import '../../widgets/common.dart';
 import '../orders/status.dart';
@@ -77,6 +78,14 @@ class _TodayScreenState extends State<TodayScreen> {
                 onPressed: () => _shift(1),
                 icon: const Icon(Icons.chevron_left),
               ),
+              IconButton(
+                tooltip: 'خريطة اليوم',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LiveMapScreen()),
+                ),
+                icon: const Icon(Icons.map_outlined),
+              ),
             ],
           ),
         ),
@@ -117,8 +126,11 @@ class _TodayScreenState extends State<TodayScreen> {
             _stat('طلبات', '${active.length}'),
             const SizedBox(width: 8),
             _stat('خلصت', '$done'),
-            const SizedBox(width: 8),
-            _stat('الإيراد', money(revenue)),
+            // A supervisor sees no money.
+            if (context.read<Session>().role != 'supervisor') ...[
+              const SizedBox(width: 8),
+              _stat('الإيراد', money(revenue)),
+            ],
           ],
         ),
         if (_orders!.isEmpty)
