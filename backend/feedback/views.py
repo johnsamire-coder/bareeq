@@ -6,7 +6,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsCustomer, IsManager
+from accounts.permissions import IsManagerOrSupervisor, limit_to_zones, IsCustomer, IsManager
 from core.errors import BusinessError
 from core.services import get_setting
 from orders.models import Order
@@ -89,7 +89,7 @@ def rating_photo_file(request, pk):
     from .models import RatingPhoto
 
     p = get_object_or_404(RatingPhoto.objects.select_related("rating"), pk=pk)
-    if not (request.user.role == "manager" or request.user.id == p.rating.customer_id):
+    if not (request.user.role in ("manager", "supervisor") or request.user.id == p.rating.customer_id):
         return Response({"code": "forbidden", "detail": "مش مسموح."}, status=403)
     return FileResponse(p.image.open("rb"), content_type="image/jpeg")
 
@@ -98,7 +98,7 @@ def rating_photo_file(request, pk):
 @permission_classes([IsAuthenticated])
 def damage_photo_file(request, pk):
     p = get_object_or_404(DamagePhoto.objects.select_related("report"), pk=pk)
-    if not (request.user.role == "manager" or request.user.id == p.report.customer_id):
+    if not (request.user.role in ("manager", "supervisor") or request.user.id == p.report.customer_id):
         return Response({"code": "forbidden", "detail": "مش مسموح."}, status=403)
     return FileResponse(p.image.open("rb"), content_type="image/jpeg")
 
@@ -106,12 +106,13 @@ def damage_photo_file(request, pk):
 class ManagerRatingViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """GET ?bad=1&unhandled=1&technician=&zone=. POST {id}/handle/ {note}. GET summary/."""
 
-    permission_classes = [IsManager]
+    permission_classes = [IsManagerOrSupervisor]
     serializer_class = RatingSerializer
 
     def get_queryset(self):
         p = self.request.query_params
         qs = Rating.objects.select_related("technician", "customer", "zone").prefetch_related("tags")
+        qs = limit_to_zones(qs, self.request.user)
         if p.get("bad"):
             qs = qs.filter(stars__lte=get_setting("ratings-bad-max-stars"))
         if p.get("unhandled"):
@@ -140,11 +141,12 @@ class ManagerRatingTagViewSet(viewsets.ModelViewSet):
 
 
 class ManagerDamageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    permission_classes = [IsManager]
+    permission_classes = [IsManagerOrSupervisor]
     serializer_class = DamageReportSerializer
 
     def get_queryset(self):
         qs = DamageReport.objects.select_related("customer").prefetch_related("photos")
+        qs = limit_to_zones(qs, self.request.user, "order__zone")
         if self.request.query_params.get("status"):
             qs = qs.filter(status=self.request.query_params["status"])
         return qs

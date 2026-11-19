@@ -16,6 +16,7 @@ class SlotsRequestSerializer(serializers.Serializer):
 
 class CreateOrderSerializer(SlotsRequestSerializer):
     start = serializers.DateTimeField()
+    express = serializers.BooleanField(required=False, default=False)
 
 
 class ConfirmSerializer(serializers.Serializer):
@@ -85,7 +86,8 @@ class OrderSerializer(serializers.ModelSerializer):
                   "hold_expires_at", "zone", "zone_name", "address", "technician", "technician_name",
                   "payment_method", "subtotal", "discount", "total", "extra_discount_kind", "extra_discount",
                   "extra_discount_label", "coupon_code", "cashback_percent", "cashback_amount", "refund_option",
-                  "card_refund_due", "subscription_period", "charges_total",
+                  "card_refund_due", "subscription_period", "is_express", "express_fee", "distance_fee",
+                  "distance_km", "charges_total",
                   "amount_due", "wallet_used",
                   "amount_to_collect", "revenue", "collected", "uncollected", "items",
                   "actual_start", "actual_end", "cancel_reason", "is_rated", "created_at"]

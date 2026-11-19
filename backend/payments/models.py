@@ -107,6 +107,7 @@ class Invoice(models.Model):
     wallet_amount = models.PositiveIntegerField("من المحفظة")
     instapay_amount = models.PositiveIntegerField("InstaPay")
     card_amount = models.PositiveIntegerField("كارت / محفظة موبايل", default=0)
+    fees_total = models.PositiveIntegerField("رسوم الطلب السريع والمسافة", default=0)
     cash_amount = models.PositiveIntegerField("كاش")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ISSUED)
     cancelled_at = models.DateTimeField(null=True, blank=True)

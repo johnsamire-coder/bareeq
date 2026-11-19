@@ -104,7 +104,14 @@ def available_slots(customer, address_id, items):
         })
     charges = outstanding_charges(customer)
     charges_total = sum(c.amount for c in charges)
+    from .fees import distance_fee, express_option
+
+    dfee, km = distance_fee(prep.zone, prep.place)
+    express = express_option(prep, now)
     return {
+        "distance_fee": dfee,
+        "distance_km": km,
+        "express": None if express is None else {"start": express["start"], "fee": express["fee"]},
         "total_minutes": prep.minutes,
         "subtotal": prep.subtotal,
         "discount": prep.discount,
@@ -112,7 +119,7 @@ def available_slots(customer, address_id, items):
         # Older unpaid fees, shown BEFORE the customer confirms, added as their own line.
         "charges": charges_payload(charges),
         "charges_total": charges_total,
-        "amount_due": prep.total + charges_total,
+        "amount_due": prep.total + charges_total + dfee,
         "cars": [{"car": car.id, "quote": q} for car, q in prep.lines],
         "days": result_days,
     }
@@ -137,12 +144,16 @@ def _travel_from_previous(profile, jobs, t, place, travel):
 
 @transaction.atomic
 def create_order(customer, address_id, items, start, *, prefer_technician=None, check_window=True,
-                 attach_charges=True, subscription_period=None):
+                 attach_charges=True, subscription_period=None, express=False):
     """Book and hold. Subscription visits (phase 3) pass check_window=False (they
     are weeks ahead), no older fees, and ask for the same technician when he fits."""
+    from .fees import check_express_start, distance_fee
+
     prep = prepare(customer, address_id, items)
     now = timezone.now()
-    if check_window:
+    if express:
+        check_express_start(prep, start, now)
+    elif check_window:
         _check_start(start, now)
     elif start <= now:
         raise BusinessError("too_soon", "الميعاد ده فات.")
@@ -173,6 +184,12 @@ def create_order(customer, address_id, items, start, *, prefer_technician=None, 
         subtotal=prep.subtotal, discount=prep.discount, total=prep.total,
         subscription_period=subscription_period,
     )
+    if subscription_period is None:  # subscription visits: the plan price only
+        dfee, km = distance_fee(prep.zone, prep.place)
+        order.distance_fee, order.distance_km = dfee, km
+        if express:
+            order.is_express, order.express_fee = True, get_setting("express-fee")
+        order.save(update_fields=["distance_fee", "distance_km", "is_express", "express_fee"])
     for car, q in prep.lines:
         OrderItem.objects.create(order=order, car=car, size_class=car.size_class, quote=q,
                                  minutes=q["total_minutes"], total=q["total"])

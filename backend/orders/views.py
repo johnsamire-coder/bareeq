@@ -7,7 +7,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from accounts.models import User
-from accounts.permissions import IsCustomer, IsManager
+from accounts.permissions import IsManagerOrSupervisor, limit_to_zones, zone_ids_of, IsCustomer, IsManager
 from core.errors import BusinessError
 from scheduling.availability import local_day_bounds
 
@@ -48,7 +48,7 @@ class MyOrderViewSet(CustomerOrderActionsMixin, mixins.ListModelMixin, mixins.Re
         s = CreateOrderSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         d = s.validated_data
-        order = create_order(request.user, d["address"], d["items"], d["start"])
+        order = create_order(request.user, d["address"], d["items"], d["start"], express=d["express"])
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], parser_classes=[JSONParser, MultiPartParser, FormParser])
@@ -75,11 +75,12 @@ class MyOrderViewSet(CustomerOrderActionsMixin, mixins.ListModelMixin, mixins.Re
 class ManagerOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """GET ?date=YYYY-MM-DD&technician=&zone=. POST {id}/reassign/ {technician, force}."""
 
-    permission_classes = [IsManager]
+    permission_classes = [IsManagerOrSupervisor]
     serializer_class = ManagerOrderSerializer
 
     def get_queryset(self):
         qs = Order.objects.select_related("technician", "zone", "customer").prefetch_related("items")
+        qs = limit_to_zones(qs, self.request.user)
         p = self.request.query_params
         if p.get("date"):
             try:
@@ -97,11 +98,20 @@ class ManagerOrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
         s = ReassignSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         tech = get_object_or_404(User, pk=s.validated_data["technician"])
-        order = reassign(self.get_object(), tech, force=s.validated_data["force"])
+        order = self.get_object()
+        if request.user.role == User.Role.SUPERVISOR:
+            if s.validated_data["force"]:
+                raise BusinessError("manager_only", "النقل بالإجبار للمدير بس.", status=403)
+            prof = getattr(tech, "technician_profile", None)
+            if prof is None or not prof.zones.filter(id__in=zone_ids_of(request.user)).exists():
+                raise BusinessError("not_your_zone", "الفني ده مش في مناطقك.", status=403)
+        order = reassign(order, tech, force=s.validated_data["force"])
         return Response(ManagerOrderSerializer(order).data)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
+        if request.user.role != User.Role.MANAGER:
+            raise BusinessError("manager_only", "الإلغاء للمدير بس.", status=403)
         from .lifecycle import cancel_by_company
         from .serializers import ReasonSerializer
 

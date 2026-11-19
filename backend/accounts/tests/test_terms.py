@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import TermsVersion, User
 from accounts.services import terms_outdated_settings
-from accounts.terms_v1 import latest_terms_text, terms_v1_text, terms_v2_text, terms_v3_text, terms_v4_text
+from accounts.terms_v1 import latest_terms_text, terms_v1_text, terms_v2_text, terms_v3_text, terms_v4_text, terms_v5_text
 from core.models import Setting
 from core.services import get_setting
 
@@ -17,8 +17,9 @@ class TermsV1Tests(TestCase):
         self.assertEqual(TermsVersion.objects.get(version=1).text, terms_v1_text())
         self.assertEqual(TermsVersion.objects.get(version=2).text, terms_v2_text())
         self.assertEqual(TermsVersion.objects.get(version=3).text, terms_v3_text())
-        self.assertEqual(TermsVersion.current().version, 4)
-        self.assertEqual(TermsVersion.current().text, terms_v4_text())
+        self.assertEqual(TermsVersion.objects.get(version=4).text, terms_v4_text())
+        self.assertEqual(TermsVersion.current().version, 5)
+        self.assertEqual(TermsVersion.current().text, terms_v5_text())
 
     def test_docs_copy_is_identical(self):
         if not DOCS_COPY.exists():
@@ -34,7 +35,8 @@ class TermsV1Tests(TestCase):
         text = latest_terms_text()
         for heading in ("الخدمة بتتعمل إزاي", "المواعيد", "الإلغاء والتأجيل", "ملقاش العربية", "الدفع",
                         "صور قبل وبعد", "الخدوش", "بياناتك", "الخصومات والمكافآت", "خصم واحد بس",
-                        "ادعي صاحبك", "كارت الغسيل", "الاشتراك الشهري"):
+                        "ادعي صاحبك", "كارت الغسيل", "الاشتراك الشهري", "الطلب السريع",
+                        "رسوم المسافة", "تتبع الفني"):
             self.assertIn(heading, text)
 
     def test_numbers_in_text_match_settings(self):
@@ -59,7 +61,7 @@ class TermsOutdatedTests(TestCase):
 
     def test_fresh_install_is_up_to_date(self):
         self.assertEqual(terms_outdated_settings(), [])
-        self.assertEqual(self.status(), {"current_version": 4, "needs_new_version": False, "changed_settings": []})
+        self.assertEqual(self.status(), {"current_version": 5, "needs_new_version": False, "changed_settings": []})
 
     def test_changing_a_terms_number_asks_for_new_version(self):
         r = self.client.patch("/api/settings/cancellation-late-fee/", {"value": 7500}, format="json")

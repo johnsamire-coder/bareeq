@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 
 from notifications import reminders
 from orders.booking import expire_holds
+from orders.tracking import delete_old as delete_old_locations
 from payments.online import auto_refund_cards
 from payments.wallet import expire_credits
 from subscriptions import service as subscriptions
@@ -24,6 +25,7 @@ class Command(BaseCommand):
             "subscription_renewal_reminders": subscriptions.renewal_reminders(),
             "ended_subscriptions": subscriptions.end_finished(),
             "card_refunds": auto_refund_cards(),
+            "old_technician_locations": delete_old_locations(),
         }
         if options["verbosity"]:
             self.stdout.write(", ".join(f"{k}: {v}" for k, v in done.items()))

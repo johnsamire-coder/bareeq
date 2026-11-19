@@ -98,3 +98,20 @@ class ClosedDay(models.Model):
 
 def is_closed(zone, day):
     return ClosedDay.objects.filter(date=day).filter(models.Q(zone=zone) | models.Q(zone__isnull=True)).exists()
+
+
+class SupervisorProfile(models.Model):
+    """A supervisor follows the work of his zones only (phase 4): today's jobs,
+    the live map, moving a job to another technician, bad ratings and damage
+    reports. No money, prices, settings or daily closings."""
+
+    user = models.OneToOneField(django_settings.AUTH_USER_MODEL, verbose_name="المشرف", on_delete=models.CASCADE,
+                                related_name="supervisor_profile", limit_choices_to={"role": "supervisor"})
+    zones = models.ManyToManyField(Zone, verbose_name="مناطقه", blank=True, related_name="supervisors")
+
+    class Meta:
+        verbose_name = "مشرف"
+        verbose_name_plural = "المشرفين"
+
+    def __str__(self):
+        return str(self.user)

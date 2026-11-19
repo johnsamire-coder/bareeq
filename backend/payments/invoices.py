@@ -46,6 +46,10 @@ def issue_invoice(order):
         "charges": [{"label": c.get_kind_display(), "amount": c.amount, "source_order": c.source_order_id}
                     for c in order.applied_charges.filter(waived_at__isnull=True)],
     }
+    lines["fees"] = [f for f in (
+        {"label": "رسوم الطلب السريع", "amount": order.express_fee} if order.express_fee else None,
+        {"label": f"رسوم المسافة ({order.distance_km} كيلو)", "amount": order.distance_fee} if order.distance_fee else None,
+    ) if f]
     if order.extra_discount:
         from orders.discounts import LABELS
 
@@ -57,7 +61,7 @@ def issue_invoice(order):
     return Invoice.objects.create(
         order=order, number=f"BR-{year}-{seq:06d}", year=year, sequence=seq, issued_at=now, lines=lines,
         subtotal=order.subtotal - oil, discount=order.discount + order.extra_discount + order.rounding, oil_total=oil,
-        charges_total=order.charges_total,
+        charges_total=order.charges_total, fees_total=order.fees_total,
         total=order.amount_due, wallet_amount=order.wallet_used,
         instapay_amount=_paid(order, Payment.Method.INSTAPAY, [Payment.Status.PENDING_REVIEW, Payment.Status.CONFIRMED]),
         cash_amount=_paid(order, Payment.Method.CASH, [Payment.Status.COLLECTED]),

@@ -26,5 +26,10 @@ def terms_v4_text():
     return (_HERE / "terms_v4_ar.md").read_text(encoding="utf-8")
 
 
+def terms_v5_text():
+    """v5 (phase 4): express order, distance fee, technician tracking, supervisors."""
+    return (_HERE / "terms_v5_ar.md").read_text(encoding="utf-8")
+
+
 def latest_terms_text():
-    return terms_v4_text()
+    return terms_v5_text()

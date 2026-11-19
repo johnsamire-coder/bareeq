@@ -51,6 +51,12 @@ class Order(models.Model):
                                                     ("subscription", "الاشتراك")])
     extra_discount = models.PositiveIntegerField("الخصم الإضافي (قرش)", default=0)
     materials_cost = models.PositiveIntegerField("تكلفة الخامات (قرش)", default=0)
+    # Phase 4: express order («عايز حد دلوقتي») and the far-address fee, each its own line.
+    is_express = models.BooleanField("طلب سريع", default=False)
+    express_fee = models.PositiveIntegerField("رسوم الطلب السريع (قرش)", default=0)
+    distance_fee = models.PositiveIntegerField("رسوم المسافة (قرش)", default=0)
+    distance_km = models.DecimalField("المسافة من أقرب فني (كيلو)", max_digits=6, decimal_places=1, null=True,
+                                      blank=True)
     # A visit of a monthly subscription (phase 3): paid with the subscription.
     subscription_period = models.ForeignKey("subscriptions.SubscriptionPeriod", null=True, blank=True,
                                             on_delete=models.PROTECT, related_name="visits")
@@ -76,12 +82,16 @@ class Order(models.Model):
         happens when an added fee has piastres; prices are already whole)."""
         from core.money import whole_pound_discount
 
-        return whole_pound_discount(self.total - self.extra_discount + self.charges_total, 0)
+        return whole_pound_discount(self.total - self.extra_discount + self.charges_total + self.fees_total, 0)
 
     @property
     def amount_due(self):
-        """Services total - extra discount + older unpaid fees added to this order, in whole pounds."""
-        return self.total - self.extra_discount + self.charges_total - self.rounding
+        """Services total - extra discount + older unpaid fees + express / distance fees, in whole pounds."""
+        return self.total - self.extra_discount + self.charges_total + self.fees_total - self.rounding
+
+    @property
+    def fees_total(self):
+        return self.express_fee + self.distance_fee
 
     @property
     def oil_total(self):
@@ -234,3 +244,21 @@ class CustomerCharge(models.Model):
         ordering = ["-created_at"]
         verbose_name = "رسوم على عميل"
         verbose_name_plural = "رسوم على العملاء"
+
+
+class TechnicianLocation(models.Model):
+    """Where a technician was, sent by his app while he is on the way to a job
+    (phase 4). Kept a few days only (setting), then deleted."""
+
+    technician = models.ForeignKey(django_settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                   related_name="locations")
+    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    lat = models.DecimalField(max_digits=9, decimal_places=6)
+    lng = models.DecimalField(max_digits=9, decimal_places=6)
+    accuracy_m = models.PositiveIntegerField(null=True, blank=True)
+    recorded_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ["-recorded_at"]
+        verbose_name = "مكان فني"
+        verbose_name_plural = "أماكن الفنيين"

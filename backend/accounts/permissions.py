@@ -21,3 +21,20 @@ class IsTechnician(_RolePermission):
 
 class IsManager(_RolePermission):
     roles = (User.Role.MANAGER,)
+
+
+class IsManagerOrSupervisor(_RolePermission):
+    roles = (User.Role.MANAGER, User.Role.SUPERVISOR)
+
+
+def zone_ids_of(user):
+    """None = every zone (manager); else the supervisor's zones."""
+    if user.role == User.Role.MANAGER:
+        return None
+    profile = getattr(user, "supervisor_profile", None)
+    return list(profile.zones.values_list("id", flat=True)) if profile else []
+
+
+def limit_to_zones(qs, user, field="zone"):
+    ids = zone_ids_of(user)
+    return qs if ids is None else qs.filter(**{f"{field}__in": ids})

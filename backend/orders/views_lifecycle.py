@@ -109,7 +109,7 @@ def photo_file(request, pk):
     """The photo itself. Only the order's customer, its technician, or a manager."""
     photo = get_object_or_404(OrderPhoto.objects.select_related("order"), pk=pk)
     u = request.user
-    if not (u.role == "manager" or u.id in (photo.order.customer_id, photo.order.technician_id)):
+    if not (u.role in ("manager", "supervisor") or u.id in (photo.order.customer_id, photo.order.technician_id)):
         return Response({"code": "forbidden", "detail": "مش مسموح."}, status=403)
     return FileResponse(photo.image.open("rb"), content_type="image/jpeg")
 
