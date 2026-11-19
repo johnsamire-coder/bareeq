@@ -17,10 +17,10 @@ class _PhoneScreenState extends State<PhoneScreen> {
   final _phone = TextEditingController();
 
   Future<void> _send() async {
-    final api = context.read<Session>().api;
-    final r = await api.post('auth/otp/request/', {
+    final s = context.read<Session>();
+    final r = await s.api.post('auth/otp/request/', {
       'phone': _phone.text.trim(),
-      'device_id': 'app',
+      'device_id': await s.deviceId(),
     });
     if (!mounted) return;
     await Navigator.of(context).push(

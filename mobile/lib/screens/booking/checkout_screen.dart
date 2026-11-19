@@ -265,6 +265,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ),
           ],
+          if ((o['cashback_percent'] ?? 0) as int > 0) ...[
+            const SizedBox(height: 12),
+            Card(
+              color: BrandColors.razaz,
+              child: ListTile(
+                leading: const Icon(Icons.savings_outlined),
+                title: Text(
+                  'هيرجعلك ${o['cashback_percent']}% كاش باك في محفظتك',
+                ),
+                subtitle: const Text(
+                  'من اللي هتدفعه كاش أو InstaPay، بعد ما الغسلة تخلص.',
+                ),
+              ),
+            ),
+          ],
           const SectionTitle('طريقة الدفع'),
           Card(
             child: RadioGroup<String>(

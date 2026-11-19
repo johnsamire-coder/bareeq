@@ -92,6 +92,12 @@ class _InboxScreenState extends State<InboxScreen> {
             const ClosingsReviewScreen(),
           ),
           row(
+            Icons.group_add_outlined,
+            'دعوات مستنية موافقتك',
+            'referrals_to_review',
+            const ReferralsReviewScreen(),
+          ),
+          row(
             Icons.star_half_rounded,
             'تقييمات وحشة',
             'bad_ratings',
@@ -458,6 +464,72 @@ class DamageReportsScreen extends _ListScreen {
             });
             reload();
           },
+        ),
+      ],
+    );
+  }
+}
+
+/// Invites above the monthly limit: the manager gives the friend the credit or not.
+class ReferralsReviewScreen extends _ListScreen {
+  const ReferralsReviewScreen({super.key});
+
+  @override
+  String get title => 'دعوات مستنية موافقتك';
+  @override
+  String get emptyText => 'مفيش دعوات مستنية.';
+  @override
+  Future<List<dynamic>> fetch(Api api) async =>
+      await api.get('manage/referrals/', {'status': 'review'}) as List;
+
+  @override
+  Widget item(BuildContext context, Api api, Map r, VoidCallback reload) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KeyValue('صاحب الكود', '${r['referrer_name']}', bold: true),
+        KeyValue('رقمه', '${r['referrer_phone']}'),
+        KeyValue(
+          'صاحبه الجديد',
+          '${r['referee_name']} (${r['referee_phone']})',
+        ),
+        if ('${r['reason']}'.isNotEmpty) Muted('${r['reason']}'),
+        if (r['first_order'] != null)
+          _orderLink(context, r['first_order'] as int),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: BusyButton(
+                label: 'ادّيله الرصيد',
+                icon: Icons.check,
+                onPressed: () async {
+                  await api.post('manage/referrals/${r['id']}/approve/');
+                  reload();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: BusyButton(
+                label: 'ارفض',
+                outlined: true,
+                onPressed: () async {
+                  final reason = await askText(
+                    context,
+                    'سبب الرفض',
+                    hint: 'مثلاً: نفس الشخص بأرقام مختلفة',
+                    ok: 'ارفض',
+                  );
+                  if (reason == null) return;
+                  await api.post('manage/referrals/${r['id']}/reject/', {
+                    'reason': reason,
+                  });
+                  reload();
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );

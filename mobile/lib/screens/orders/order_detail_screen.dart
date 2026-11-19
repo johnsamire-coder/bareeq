@@ -107,6 +107,44 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  /// Cancelled order paid by InstaPay: money back, or into the wallet + bonus.
+  Widget _refundCard(Map r) => Card(
+    color: BrandColors.razaz,
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'فلوسك (${money(r['amount'])}) هترجعلك على InstaPay.',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Muted(
+            'أو خليها في محفظتك وخد ${money(r['bonus'])} زيادة '
+            '(${money(r['wallet_amount'])}) تستخدمها في غسلتك الجاية.',
+          ),
+          const SizedBox(height: 10),
+          BusyButton(
+            label: 'حطها في المحفظة (${money(r['wallet_amount'])})',
+            icon: Icons.account_balance_wallet_outlined,
+            onPressed: () async {
+              final ok = await confirmDialog(
+                context,
+                'تحط ${money(r['wallet_amount'])} في المحفظة؟',
+                'الفلوس مش هترجعلك على InstaPay. رصيد المحفظة ليه مدة صلاحية.',
+              );
+              if (!ok) return;
+              await _api.post('orders/${widget.orderId}/refund-to-wallet/');
+              if (mounted) showInfo(context, 'الفلوس نزلت في محفظتك.');
+              _load();
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+
   Widget _body() {
     final o = _o!;
     final status = '${o['status']}';
@@ -143,6 +181,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
           ),
         ),
+        if (o['refund_option'] != null) _refundCard(o['refund_option'] as Map),
         const SectionTitle('التفاصيل'),
         Card(
           child: Padding(
@@ -187,6 +226,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 KeyValue('الإجمالي', money(o['amount_due']), bold: true),
                 if ((o['wallet_used'] as int) > 0)
                   KeyValue('من المحفظة', '- ${money(o['wallet_used'])}'),
+                if (((o['cashback_amount'] ?? 0) as int) > 0)
+                  KeyValue(
+                    'كاش باك نزل في محفظتك',
+                    money(o['cashback_amount']),
+                    color: BrandColors.good,
+                  ),
                 if ({
                       'confirmed',
                       'on_the_way',

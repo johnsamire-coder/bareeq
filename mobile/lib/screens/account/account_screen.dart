@@ -6,6 +6,7 @@ import '../../widgets/common.dart';
 import '../../widgets/terms_text.dart';
 import '../addresses/my_addresses_screen.dart';
 import '../cars/my_cars_screen.dart';
+import 'rewards_screen.dart';
 import 'wallet_screen.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -48,6 +49,7 @@ class AccountScreen extends StatelessWidget {
         const SizedBox(height: 12),
         link(Icons.directions_car_outlined, 'عربياتي', const MyCarsScreen()),
         link(Icons.location_on_outlined, 'عناويني', const MyAddressesScreen()),
+        link(Icons.card_giftcard, 'مكافآتي', const RewardsScreen()),
         link(
           Icons.account_balance_wallet_outlined,
           'المحفظة',

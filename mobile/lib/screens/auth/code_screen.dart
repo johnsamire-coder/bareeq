@@ -85,9 +85,10 @@ class _CodeScreenState extends State<CodeScreen> {
   }
 
   Future<void> _resend() async {
-    final r = await context.read<Session>().api.post('auth/otp/request/', {
+    final s = context.read<Session>();
+    final r = await s.api.post('auth/otp/request/', {
       'phone': widget.phone,
-      'device_id': 'app',
+      'device_id': await s.deviceId(),
     });
     if (r is Map && r['demo_code'] != null) {
       setState(() => _demoCode = '${r['demo_code']}');

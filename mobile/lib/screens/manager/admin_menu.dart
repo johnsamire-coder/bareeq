@@ -4,6 +4,7 @@ import '../../widgets/common.dart';
 import 'cars_catalog_screen.dart';
 import 'close_day_screen.dart';
 import 'custody_screen.dart';
+import 'wallet_report_screen.dart';
 import 'customers_screen.dart';
 import 'reports_screen.dart';
 import 'lists.dart';
@@ -49,6 +50,12 @@ class AdminMenu extends StatelessWidget {
           'العملاء',
           'ملف كل عميل، المحفظة، الرسوم، الملاحظات',
           () => const CustomersScreen(),
+        ),
+        item(
+          Icons.savings_outlined,
+          'تقرير المحفظة',
+          'الرصيد المفتوح على الشركة، واللي نزل واتصرف وانتهى',
+          () => const WalletReportScreen(),
         ),
         item(
           Icons.account_balance_wallet_outlined,

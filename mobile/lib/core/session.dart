@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,6 +18,22 @@ class Session extends ChangeNotifier {
   bool get loggedIn => api.token != null && user != null;
   String get role => '${user?['role'] ?? ''}';
   bool get needsTerms => user?['needs_terms_acceptance'] == true;
+
+  /// A random id kept on this phone (sent with login codes; used to spot the
+  /// same phone inviting itself).
+  Future<String> deviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    var id = prefs.getString('device_id');
+    if (id == null) {
+      final r = Random.secure();
+      id = List.generate(
+        16,
+        (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+      ).join();
+      await prefs.setString('device_id', id);
+    }
+    return id;
+  }
 
   Future<void> loadConfig() async {
     try {
