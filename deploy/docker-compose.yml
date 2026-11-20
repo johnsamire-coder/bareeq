@@ -1,0 +1,73 @@
+# Bareeq test server (run from the deploy/ folder): its own database, the app,
+# and the timed jobs. Only 127.0.0.1:8020 is open, for nginx on the machine.
+name: bareeq
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bareeq
+      POSTGRES_USER: bareeq
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?put DB_PASSWORD in deploy/.env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bareeq -d bareeq"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: bareeq
+      DB_USER: bareeq
+      DJANGO_DEBUG: "False"
+      BEHIND_HTTPS_PROXY: "true"
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py seed_demo_technicians &&
+             gunicorn config.wsgi -b 0.0.0.0:8000 -w 2 --timeout 60"
+    healthcheck:
+      # healthy once the database tables are all there
+      test: ["CMD", "python", "manage.py", "migrate", "--check"]
+      interval: 10s
+      retries: 30
+      start_period: 20s
+    ports:
+      - "127.0.0.1:8020:8000"
+    volumes:
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 512m
+
+  jobs:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: bareeq
+      DB_USER: bareeq
+    command: sh -c "while true; do python manage.py run_scheduled_jobs; sleep 300; done"
+    volumes:
+      - media:/app/media
+    depends_on:
+      app:
+        condition: service_healthy
+    mem_limit: 256m
+
+volumes:
+  db-data:
+  media:

@@ -229,3 +229,24 @@ cd d:\bareeq; git pull; powershell -executionpolicy bypass -file d:\bareeq\scrip
 (`-rebuild` بيعيد تجهيز التطبيق، وده بياخد كام دقيقة. لو مسحبتش حاجة جديدة من GitHub شيله.)
 
 في الآخر هيظهر سطر أصفر فيه اللينك (شكله `https://....trycloudflare.com`)، وبيتنسخ لوحده، فتقدر تلصقه للعميل على واتساب. وهيفتح شباك تاني للسيرفر، وأكواد الدخول بتظهر فيه كمان. سيب الشباكين مفتوحين، ولما تخلص دوس Enter في الشباك الأولاني.
+
+
+### سيرفر التجربة (على سيرفر MotionHR، معزول)
+
+بريق بيشتغل في صناديق Docker لوحده (قاعدة بيانات لوحدها، والتطبيق، والأوامر اللي بتشتغل لوحدها كل 5 دقايق)، ومش بيلمس قاعدة بيانات MotionHR ولا إعداداته. الحاجة الوحيدة المشتركة: موقع جديد في nginx باسم `bareeq.jssolutions-eg.com` بيوصل لـ `127.0.0.1:8020`. الملفات في فولدر `deploy/`.
+
+**أول مرة** — شباك السيرفر (john@srv...):
+
+```bash
+cd ~ && git clone https://github.com/johnsamire-coder/bareeq.git && cd bareeq && sudo bash deploy/setup.sh
+```
+
+`setup.sh` بيعمل `deploy/.env` بأسرار جديدة أول مرة (`DJANGO_SECRET_KEY` و`DB_PASSWORD`). احفظ نسخة منه في Bitwarden باسم `bareeq - test server .env` (`sudo cat ~/bareeq/deploy/.env`).
+
+**التحديث بعد أي شغل جديد** — شباك السيرفر:
+
+```bash
+cd ~/bareeq && git pull && sudo bash deploy/setup.sh
+```
+
+> التطبيق نفسه (نسخة المتصفح) متجهز جاهز في `deploy/web-build/`. بعد أي تعديل في التطبيق، بيتعمل من جديد على جهاز فيه Flutter: `flutter build web --release --dart-define=API_BASE=/api`، وبعدين بنمسح `canvaskit/` وملفات `*.symbols` (التطبيق بيجيبها من جوجل) وننسخ الباقي لـ `deploy/web-build/`.

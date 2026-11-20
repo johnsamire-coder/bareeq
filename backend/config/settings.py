@@ -31,6 +31,11 @@ APP_WEB_DIR = env("APP_WEB_DIR", "")
 # a test payment page (no real money). Must be the real one before launch.
 PAYMENT_GATEWAY = env("PAYMENT_GATEWAY", "fake")
 
+# Behind nginx with HTTPS (test / real server): trust its "this was https" header,
+# so links the server makes (payment page, Excel download) start with https.
+if env("BEHIND_HTTPS_PROXY", "").lower() in ("1", "true", "yes"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
