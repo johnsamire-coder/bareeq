@@ -250,3 +250,11 @@ cd ~/bareeq && git pull && sudo bash deploy/setup.sh
 ```
 
 > التطبيق نفسه (نسخة المتصفح) متجهز جاهز في `deploy/web-build/`. بعد أي تعديل في التطبيق، بيتعمل من جديد على جهاز فيه Flutter: `flutter build web --release --dart-define=API_BASE=/api`، وبعدين بنمسح `canvaskit/` وملفات `*.symbols` (التطبيق بيجيبها من جوجل) وننسخ الباقي لـ `deploy/web-build/`.
+
+**لينك مؤقت من غير دومين** (Cloudflare Tunnel في صندوق جنب بريق؛ مش بيلمس nginx):
+
+```bash
+cd ~/bareeq/deploy && sudo docker compose --profile tunnel up -d tunnel && sleep 20 && sudo docker compose logs tunnel | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | tail -1
+```
+
+(لازم `DJANGO_ALLOWED_HOSTS` في `deploy/.env` يكون فيه `.trycloudflare.com`.)
