@@ -10,8 +10,10 @@ if [ ! -f .env ]; then
   echo "Made deploy/.env with new secrets (save a copy in Bitwarden)."
 fi
 docker compose up -d --build
+# Ask with the site's own name (the server answers only to its allowed names).
+HOST=$(grep -E '^DJANGO_ALLOWED_HOSTS=' .env | cut -d= -f2 | cut -d, -f1)
 for i in $(seq 1 60); do
-  if curl -fsS http://127.0.0.1:8020/api/health/ >/dev/null 2>&1; then
+  if curl -fsS -H "Host: ${HOST}" http://127.0.0.1:8020/api/health/ >/dev/null 2>&1; then
     echo "BAREEQ IS RUNNING on 127.0.0.1:8020"; exit 0
   fi
   sleep 3
