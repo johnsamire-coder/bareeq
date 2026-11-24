@@ -13,11 +13,12 @@ import 'screens/supervisor/supervisor_home.dart';
 import 'screens/manager/manager_home.dart';
 import 'screens/tech/tech_home.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await resolveApiBase();
   // For automated screen tests in a browser only (flutter build web --dart-define=SEMANTICS=true):
   // exposes buttons and texts to the test tool. Off in the real app.
   if (const bool.fromEnvironment('SEMANTICS')) {
-    WidgetsFlutterBinding.ensureInitialized();
     SemanticsBinding.instance.ensureSemantics();
   }
   final session = Session(Api())..restore();

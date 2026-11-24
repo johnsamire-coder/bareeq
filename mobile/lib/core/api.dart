@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Server address. Default is the server on the same computer. For a phone on
 /// the network: flutter run --dart-define=API_BASE=http://192.168.1.10:8000/api
@@ -11,9 +12,32 @@ const _apiBaseSetting = String.fromEnvironment(
   'API_BASE',
   defaultValue: 'http://localhost:8000/api',
 );
-final apiBase = _apiBaseSetting.startsWith('/')
+String apiBase = _apiBaseSetting.startsWith('/')
     ? Uri.base.resolve(_apiBaseSetting).toString()
     : _apiBaseSetting;
+
+/// API_BASE=remote (the test app file): the server's address is read when the
+/// app opens from a small file on GitHub, so the same installed app keeps
+/// working when the temporary test link changes. The last one is remembered.
+const serverAddressFile =
+    'https://raw.githubusercontent.com/johnsamire-coder/bareeq/main/deploy/server-url.txt';
+
+Future<void> resolveApiBase() async {
+  if (_apiBaseSetting != 'remote') return;
+  final prefs = await SharedPreferences.getInstance();
+  try {
+    final r = await http
+        .get(Uri.parse(serverAddressFile))
+        .timeout(const Duration(seconds: 8));
+    final url = r.body.trim();
+    if (r.statusCode == 200 && url.startsWith('https://')) {
+      apiBase = '$url/api';
+      await prefs.setString('api_base', apiBase);
+      return;
+    }
+  } catch (_) {}
+  apiBase = prefs.getString('api_base') ?? apiBase;
+}
 
 /// An error the server explained: `code` (stable name) and `message` (Arabic).
 class ApiError implements Exception {
