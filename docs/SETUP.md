@@ -258,3 +258,9 @@ cd ~/bareeq/deploy && sudo docker compose --profile tunnel up -d tunnel && sleep
 ```
 
 (لازم `DJANGO_ALLOWED_HOSTS` في `deploy/.env` يكون فيه `.trycloudflare.com`.)
+
+### نسخة أندرويد للتجربة (من غير كمبيوتر)
+
+GitHub بيبني ملف الـ APK لوحده كل ما يتغير حاجة في `mobile/` (أو من تبويب Actions ← «Android test app» ← Run workflow). التنزيل من الموبايل: https://github.com/johnsamire-coder/bareeq/releases/latest/download/bareeq-test.apk
+
+التطبيق ده بيقرا عنوان السيرفر من `deploy/server-url.txt` (أول سطر، من غير `/api` في الآخر). لو لينك السيرفر اتغير، عدّل الملف ده وارفعه على main، والتطبيق المتسطب هياخد العنوان الجديد أول ما يتفتح.
